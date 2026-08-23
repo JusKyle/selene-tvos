@@ -2228,10 +2228,10 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
               if (isLive)
                 Row(
                   children: [
-                    const Container(
+                    Container(
                       width: 4,
                       height: 4,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Color(0xFF27ae60),
                         shape: BoxShape.circle,
                       ),

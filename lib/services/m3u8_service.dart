@@ -583,3 +583,16 @@ class M3U8Service {
   }
 }
 
+/// 单个源的测速结果
+class SourceSpeed {
+  final String quality;
+  final String loadSpeed;
+  final String pingTime;
+
+  const SourceSpeed({
+    required this.quality,
+    required this.loadSpeed,
+    required this.pingTime,
+  });
+}
+
