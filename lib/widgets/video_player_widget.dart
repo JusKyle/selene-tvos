@@ -1,11 +1,12 @@
 import 'dart:async';
-import '../core/platform_detector.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:pip/pip.dart';
+import '../core/platform_detector.dart';
 import 'mobile_player_controls.dart';
 import 'pc_player_controls.dart';
+import 'tv_player_controls.dart';
 import 'video_player_surface.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
@@ -147,9 +148,13 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
     WidgetsBinding.instance.addObserver(this);
     _currentUrl = widget.url;
     _currentHeaders = widget.headers;
+    // 确保平台检测就绪
+    PlatformDetector.init();
     _initializePlayer();
-    _setupPip();
-    _registerPipObserver();
+    if (!PlatformDetector.isTVOS) {
+      _setupPip();
+      _registerPipObserver();
+    }
     widget.onControllerCreated?.call(VideoPlayerWidgetController._(this));
   }
 
@@ -239,17 +244,11 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
         setState(() {
           _hasCompleted = false;
         });
+      }
+      // PiP 管理仅在非 tvOS 平台执行
+      if (!PlatformDetector.isTVOS) {
         _pip.setup(const PipOptions(
-          autoEnterEnabled: false,
-          aspectRatioX: 16,
-          aspectRatioY: 9,
-          preferredContentWidth: 480,
-          preferredContentHeight: 270,
-          controlStyle: 2,
-        ));
-      } else {
-        _pip.setup(const PipOptions(
-          autoEnterEnabled: true,
+          autoEnterEnabled: playing,
           aspectRatioX: 16,
           aspectRatioY: 9,
           preferredContentWidth: 480,
@@ -353,6 +352,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
   }
 
   void _setupPip() {
+    if (PlatformDetector.isTVOS) return;
     if (!PlatformDetector.isAndroid && !PlatformDetector.isIOS) {
       return;
     }
@@ -367,6 +367,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
   }
 
   void _registerPipObserver() {
+    if (PlatformDetector.isTVOS) return;
     if (!PlatformDetector.isAndroid && !PlatformDetector.isIOS) {
       return;
     }
@@ -461,7 +462,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    if (PlatformDetector.isAndroid || PlatformDetector.isIOS) {
+if (!PlatformDetector.isTVOS &&
+        (PlatformDetector.isAndroid || PlatformDetector.isIOS)) {
       _pip.unregisterStateChangedObserver();
       _pip.dispose();
     }
@@ -478,6 +480,44 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
           ? Video(
               controller: _videoController!,
               controls: (state) {
+                // tvOS：使用 TVPlayerControls
+                if (PlatformDetector.isTVOS) {
+                  return TVPlayerControls(
+                    onPlayPause: () => _player?.playOrPause(),
+                    onSeekForward: () async {
+                      final pos = _player?.state.position ?? Duration.zero;
+                      final next = pos + const Duration(seconds: 10);
+                      if (next <= (_player?.state.duration ?? Duration.zero)) {
+                        await _player?.seek(next);
+                      }
+                    },
+                    onSeekBackward: () async {
+                      final pos = _player?.state.position ?? Duration.zero;
+                      final next =
+                          pos - const Duration(seconds: 10) < Duration.zero
+                              ? Duration.zero
+                              : pos - const Duration(seconds: 10);
+                      await _player?.seek(next);
+                    },
+                    onNextEpisode: widget.onNextEpisode,
+                    onBack: widget.onBackPressed,
+                    isPlaying: _player?.state.playing ?? false,
+                    position: _player?.state.position ?? Duration.zero,
+                    duration: _player?.state.duration ?? Duration.zero,
+                    playbackSpeed: _playbackSpeed.value,
+                    playbackSpeedListenable: _playbackSpeed,
+                    onSetSpeed: _setPlaybackSpeed,
+                    isLastEpisode: widget.isLastEpisode,
+                    isLoading: _isLoadingVideo,
+                    videoTitle: widget.videoTitle,
+                    sourceName: widget.sourceName,
+                    currentEpisodeIndex: widget.currentEpisodeIndex,
+                    totalEpisodes: widget.totalEpisodes,
+                    onPiPPressed: _enterPipMode,
+                    isPipMode: _isPipMode,
+                  );
+                }
+
                 return widget.surface == VideoPlayerSurface.desktop
                     ? PCPlayerControls(
                         state: state,

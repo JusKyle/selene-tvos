@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Apple TV Focus 高亮通用包裹组件
 /// 当获得焦点时：放大 + 白色边框 + 阴影
@@ -12,6 +13,8 @@ class TVFocusableWidget extends StatefulWidget {
   final Duration animationDuration;
   final FocusNode? focusNode;
   final bool enabled;
+  final bool autofocus;
+  final FocusTraversalPolicy? focusTraversalPolicy;
 
   const TVFocusableWidget({
     super.key,
@@ -24,6 +27,8 @@ class TVFocusableWidget extends StatefulWidget {
     this.animationDuration = const Duration(milliseconds: 150),
     this.focusNode,
     this.enabled = true,
+    this.autofocus = false,
+    this.focusTraversalPolicy,
   });
 
   @override
@@ -44,9 +49,7 @@ class _TVFocusableWidgetState extends State<TVFocusableWidget> {
   void _onFocusChange() {
     final focused = _node.hasFocus;
     if (focused != _isFocused) {
-      setState(() {
-        _isFocused = focused;
-      });
+      setState(() { _isFocused = focused; });
     }
   }
 
@@ -62,16 +65,19 @@ class _TVFocusableWidgetState extends State<TVFocusableWidget> {
     return Focus(
       focusNode: _node,
       canRequestFocus: widget.enabled,
-      onKey: (node, event) {
-        if (event is RawKeyDownEvent) {
-          // Menu 按钮触发 context menu
-          if (event.logicalKey == LogicalKeyboardKey.goBack) {
-            widget.onMenu?.call();
+      autofocus: widget.autofocus,
+      focusTraversalPolicy: widget.focusTraversalPolicy,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.space) {
+            widget.onTap?.call();
             return KeyEventResult.handled;
           }
-          // Select 按钮触发点击
-          if (event.logicalKey == LogicalKeyboardKey.select) {
-            widget.onTap?.call();
+          if (event.logicalKey == LogicalKeyboardKey.goBack ||
+              event.logicalKey == LogicalKeyboardKey.escape) {
+            widget.onMenu?.call();
             return KeyEventResult.handled;
           }
         }
@@ -88,15 +94,13 @@ class _TVFocusableWidgetState extends State<TVFocusableWidget> {
               width: _isFocused ? widget.borderWidth : 0,
             ),
             borderRadius: BorderRadius.circular(8),
-            boxShadow: _isFocused
-                ? [
-                    BoxShadow(
-                      color: widget.borderColor.withOpacity(0.3),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                    ),
-                  ]
-                : [],
+            boxShadow: _isFocused ? [
+              BoxShadow(
+                color: widget.borderColor.withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 2,
+              ),
+            ] : [],
           ),
           child: widget.child,
         ),
