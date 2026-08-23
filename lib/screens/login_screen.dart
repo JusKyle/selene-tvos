@@ -9,6 +9,8 @@ import '../services/subscription_service.dart';
 import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
 import '../widgets/windows_title_bar.dart';
+import '../widgets/tv_focusable.dart';
+import '../widgets/custom_switch.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -25,6 +27,18 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _subscriptionUrlController = TextEditingController();
   bool _isPasswordVisible = false;
+
+  // tvOS Focus 导航节点（外层高亮包裹，内层为文本输入）
+  final _urlTvNode = FocusNode(debugLabel: 'url_tv');
+  final _usernameTvNode = FocusNode(debugLabel: 'username_tv');
+  final _passwordTvNode = FocusNode(debugLabel: 'password_tv');
+  final _loginButtonTvNode = FocusNode(debugLabel: 'login_button_tv');
+  final _localModeTvNode = FocusNode(debugLabel: 'local_mode_tv');
+  final _subscriptionUrlTvNode = FocusNode(debugLabel: 'subscription_url_tv');
+  final _urlFieldNode = FocusNode(debugLabel: 'url_field');
+  final _usernameFieldNode = FocusNode(debugLabel: 'username_field');
+  final _passwordFieldNode = FocusNode(debugLabel: 'password_field');
+  final _subscriptionUrlFieldNode = FocusNode(debugLabel: 'subscription_url_field');
   bool _isLoading = false;
   bool _isFormValid = false;
   bool _isLocalMode = false;
@@ -83,6 +97,17 @@ class _LoginScreenState extends State<LoginScreen> {
     _usernameController.dispose();
     _passwordController.dispose();
     _subscriptionUrlController.dispose();
+    // tvOS Focus 节点
+    _urlTvNode.dispose();
+    _usernameTvNode.dispose();
+    _passwordTvNode.dispose();
+    _loginButtonTvNode.dispose();
+    _localModeTvNode.dispose();
+    _subscriptionUrlTvNode.dispose();
+    _urlFieldNode.dispose();
+    _usernameFieldNode.dispose();
+    _passwordFieldNode.dispose();
+    _subscriptionUrlFieldNode.dispose();
     _tapTimer?.cancel();
     super.dispose();
   }
@@ -113,6 +138,18 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       });
     }
+  }
+
+  // tvOS 本地模式开关切换
+  void _toggleLocalMode() {
+    setState(() {
+      _isLocalMode = !_isLocalMode;
+      _validateForm();
+    });
+    _showToast(
+      _isLocalMode ? '已切换到本地模式' : '已切换到服务器模式',
+      const Color(0xFF27ae60),
+    );
   }
 
   void _validateForm() {
@@ -524,6 +561,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // tvOS 专用 10-foot UI 布局（Focus 表单导航 + 大字体暗色主题）
+    if (PlatformDetector.isTVOS) {
+      return _buildTVLayout();
+    }
+
     final isTablet = DeviceUtils.isTablet(context);
 
     return Scaffold(
@@ -1098,5 +1140,316 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
     );
+  }
+
+  // ---- tvOS 专用布局（10-foot UI）----
+
+  Widget _buildTVLayout() {
+    return Scaffold(
+      backgroundColor: const Color(0xFF000000),
+      body: SafeArea(
+        child: Center(
+          child: FocusTraversalGroup(
+            policy: _LoginFocusTraversal([
+              _urlTvNode,
+              _usernameTvNode,
+              _passwordTvNode,
+              _loginButtonTvNode,
+              _localModeTvNode,
+              _subscriptionUrlTvNode,
+            ]),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 48,
+                vertical: 32,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Selene 标题
+                    const Text(
+                      'Selene',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 52,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white,
+                        letterSpacing: 2.0,
+                      ),
+                    ),
+                    const SizedBox(height: 56),
+
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Focus 顺序：服务器 URL → 用户名 → 密码
+                          _buildTVTextField(
+                            tvNode: _urlTvNode,
+                            fieldNode: _urlFieldNode,
+                            controller: _urlController,
+                            label: '服务器地址',
+                            hint: 'https://example.com',
+                            icon: Icons.link,
+                            autofocus: true,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return '请输入服务器地址';
+                              }
+                              final uri = Uri.tryParse(value);
+                              if (uri == null ||
+                                  uri.scheme.isEmpty ||
+                                  uri.host.isEmpty) {
+                                return '请输入有效的URL地址';
+                              }
+                              return null;
+                            },
+                          ),
+                          _buildTVTextField(
+                            tvNode: _usernameTvNode,
+                            fieldNode: _usernameFieldNode,
+                            controller: _usernameController,
+                            label: '用户名',
+                            hint: '请输入用户名',
+                            icon: Icons.person,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return '请输入用户名';
+                              }
+                              return null;
+                            },
+                          ),
+                          _buildTVTextField(
+                            tvNode: _passwordTvNode,
+                            fieldNode: _passwordFieldNode,
+                            controller: _passwordController,
+                            label: '密码',
+                            hint: '请输入密码',
+                            icon: Icons.lock,
+                            obscure: true,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return '请输入密码';
+                              }
+                              return null;
+                            },
+                          ),
+
+                          // 登录按钮
+                          _buildTVLoginButton(),
+
+                          // 本地模式开关
+                          _buildTVLocalModeSwitch(),
+
+                          // 本地模式下的订阅 URL
+                          if (_isLocalMode)
+                            _buildTVTextField(
+                              tvNode: _subscriptionUrlTvNode,
+                              fieldNode: _subscriptionUrlFieldNode,
+                              controller: _subscriptionUrlController,
+                              label: '订阅链接',
+                              hint: '请输入订阅链接',
+                              icon: Icons.link,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return '请输入订阅链接';
+                                }
+                                return null;
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTVTextField({
+    required FocusNode tvNode,
+    required FocusNode fieldNode,
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool obscure = false,
+    bool autofocus = false,
+    String? Function(String?)? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: TVFocusableWidget(
+        focusNode: tvNode,
+        autofocus: autofocus,
+        onTap: () => FocusScope.of(context).requestFocus(fieldNode),
+        child: TextFormField(
+          controller: controller,
+          focusNode: fieldNode,
+          obscureText: obscure,
+          style: const TextStyle(fontSize: 22, color: Colors.white),
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: const TextStyle(color: Colors.white70, fontSize: 20),
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.white38, fontSize: 20),
+            prefixIcon: Icon(icon, color: Colors.white70, size: 28),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Colors.white, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 22,
+            ),
+          ),
+          validator: validator,
+          onChanged: (_) => _validateForm(),
+          onFieldSubmitted: (_) => _handleSubmit(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTVLoginButton() {
+    final enabled = _isFormValid && !_isLoading;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      child: TVFocusableWidget(
+        focusNode: _loginButtonTvNode,
+        onTap: enabled ? _handleSubmit : null,
+        child: ElevatedButton(
+          onPressed: enabled ? _handleSubmit : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2c3e50),
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: const Color(0xFF333333),
+            disabledForegroundColor: Colors.white38,
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            elevation: 0,
+            shadowColor: Colors.transparent,
+          ),
+          child: _isLoading
+              ? const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 14),
+                    Text(
+                      '登录中...',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                )
+              : const Text(
+                  '登录',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                    color: Colors.white,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTVLocalModeSwitch() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: TVFocusableWidget(
+        focusNode: _localModeTvNode,
+        onTap: _toggleLocalMode,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.language, color: Colors.white70, size: 32),
+            const SizedBox(width: 14),
+            const Text(
+              '本地模式',
+              style: TextStyle(fontSize: 24, color: Colors.white),
+            ),
+            const SizedBox(width: 16),
+            CustomSwitch(
+              value: _isLocalMode,
+              onChanged: (_) => _toggleLocalMode(),
+              activeColor: const Color(0xFF27ae60),
+              inactiveColor: const Color(0xFF555555),
+              width: 72,
+              height: 40,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// tvOS 登录表单纵向 Focus 导航策略
+/// 仅遍历外层 TVFocusableWidget 节点（排除 TextFormField 内部输入节点），
+/// 按从上到下的视觉顺序导航，确保方向键上下在字段间移动。
+class _LoginFocusTraversal extends FocusTraversalPolicy {
+  final List<FocusNode> primaryNodes;
+
+  _LoginFocusTraversal(this.primaryNodes);
+
+  Iterable<FocusNode> _filtered(Iterable<FocusNode> descendants) =>
+      descendants.where(primaryNodes.contains);
+
+  Rect _rect(FocusNode node) {
+    final renderBox = node.context?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return Rect.zero;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    return offset & renderBox.size;
+  }
+
+  @override
+  Iterable<FocusNode> sortDescendants(
+    Iterable<FocusNode> descendants, {
+    FocusNode? currentNode,
+  }) {
+    final sorted = _filtered(descendants).toList()
+      ..sort((a, b) {
+        final aRect = _rect(a);
+        final bRect = _rect(b);
+        final cmp = aRect.top.compareTo(bRect.top);
+        return cmp != 0 ? cmp : aRect.left.compareTo(bRect.left);
+      });
+    return sorted;
   }
 }
