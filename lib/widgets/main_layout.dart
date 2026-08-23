@@ -87,10 +87,17 @@ class _MainLayoutState extends State<MainLayout> {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
 
+  // tvOS 搜索框聚焦状态（用于白色边框高亮）
+  bool _isSearchFieldFocused = false;
+  // 搜索建议列表的 FocusNode，用于判断失焦时焦点是否移入了建议框
+  final FocusNode _suggestionsFocusNode =
+      FocusNode(debugLabel: 'search_suggestions');
+
   @override
   void dispose() {
     _debounceTimer?.cancel();
     _removeOverlay();
+    _suggestionsFocusNode.dispose();
     super.dispose();
   }
 
@@ -212,60 +219,18 @@ class _MainLayoutState extends State<MainLayout> {
           link: _layerLink,
           showWhenUnlinked: false,
           offset: const Offset(0, 42), // 紧贴搜索框
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(12),
-            color: themeService.isDarkMode
-                ? const Color(0xFF1e1e1e)
-                : Colors.white,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 320),
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                shrinkWrap: true,
-                itemCount: _searchSuggestions.length,
-                itemBuilder: (context, index) {
-                  final suggestion = _searchSuggestions[index];
-                  return InkWell(
-                    onTap: () {
-                      widget.searchController?.text = suggestion;
-                      widget.onSearchSubmitted?.call(suggestion);
-                      _removeOverlay();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            LucideIcons.search,
-                            size: 16,
-                            color: themeService.isDarkMode
-                                ? const Color(0xFF666666)
-                                : const Color(0xFF95a5a6),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              suggestion,
-                              style: FontUtils.poppins(
-                                fontSize: 14,
-                                color: themeService.isDarkMode
-                                    ? const Color(0xFFffffff)
-                                    : const Color(0xFF2c3e50),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+          child: Focus(
+            focusNode: _suggestionsFocusNode,
+            canRequestFocus: false,
+            child: Material(
+              elevation: 8,
+              borderRadius: BorderRadius.circular(12),
+              color: themeService.isDarkMode
+                  ? const Color(0xFF1e1e1e)
+                  : Colors.white,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 320),
+                child: _buildSuggestionsList(themeService),
               ),
             ),
           ),
@@ -274,6 +239,75 @@ class _MainLayoutState extends State<MainLayout> {
     );
 
     Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  /// 构建搜索建议列表；tvOS 使用 Focus 导航
+  Widget _buildSuggestionsList(ThemeService themeService) {
+    final listView = ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      shrinkWrap: true,
+      itemCount: _searchSuggestions.length,
+      itemBuilder: (context, index) {
+        final suggestion = _searchSuggestions[index];
+        final row = _buildSuggestionRow(themeService, suggestion);
+        if (PlatformDetector.isTVOS) {
+          return TVFocusableWidget(
+            onTap: () {
+              widget.searchController?.text = suggestion;
+              widget.onSearchSubmitted?.call(suggestion);
+              _removeOverlay();
+            },
+            child: row,
+          );
+        }
+        return InkWell(
+          onTap: () {
+            widget.searchController?.text = suggestion;
+            widget.onSearchSubmitted?.call(suggestion);
+            _removeOverlay();
+          },
+          child: row,
+        );
+      },
+    );
+
+    if (PlatformDetector.isTVOS) {
+      return TVFocusGrid(child: listView);
+    }
+    return listView;
+  }
+
+  /// 构建单个搜索建议行内容
+  Widget _buildSuggestionRow(ThemeService themeService, String suggestion) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            LucideIcons.search,
+            size: 16,
+            color: themeService.isDarkMode
+                ? const Color(0xFF666666)
+                : const Color(0xFF95a5a6),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              suggestion,
+              style: FontUtils.poppins(
+                fontSize: 14,
+                color: themeService.isDarkMode
+                    ? const Color(0xFFffffff)
+                    : const Color(0xFF2c3e50),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -533,12 +567,34 @@ body: _buildBody(context, themeService),
           color:
               themeService.isDarkMode ? const Color(0xFF1e1e1e) : Colors.white,
           borderRadius: BorderRadius.circular(12),
+          // tvOS 聚焦时显示白色边框高亮
+          border: PlatformDetector.isTVOS && _isSearchFieldFocused
+              ? Border.all(color: Colors.white, width: 3)
+              : null,
+          boxShadow: PlatformDetector.isTVOS && _isSearchFieldFocused
+              ? [
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.3),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
         ),
         child: Focus(
           onFocusChange: (hasFocus) {
+            if (_isSearchFieldFocused != hasFocus) {
+              setState(() {
+                _isSearchFieldFocused = hasFocus;
+              });
+            }
             if (!hasFocus) {
-              // 失焦时关闭建议框
-              _removeOverlay();
+              // 失焦时关闭建议框；若焦点已移动到建议框内则保留
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && !_suggestionsFocusNode.hasFocus) {
+                  _removeOverlay();
+                }
+              });
             }
           },
           child: TextField(
