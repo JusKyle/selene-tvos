@@ -29,6 +29,7 @@ class MainLayout extends StatefulWidget {
   final Function(String)? onSearchQueryChanged;
   final Function(String)? onSearchSubmitted;
   final VoidCallback? onClearSearch;
+  final VoidCallback? onMenuRefresh; // tvOS: 根页面按 Menu 键触发刷新（下拉刷新替代方案）
   final bool showBottomNav;
 
   const MainLayout({
@@ -47,6 +48,7 @@ class MainLayout extends StatefulWidget {
     this.onSearchQueryChanged,
     this.onSearchSubmitted,
     this.onClearSearch,
+    this.onMenuRefresh,
     this.showBottomNav = true,
   });
 
@@ -364,7 +366,7 @@ body: _buildBody(context, themeService),
     return scaffoldBody;
   }
 
-  /// tvOS 全局按键处理（Select 选中、Menu 返回）
+  /// tvOS 全局按键处理（Select 选中、Menu 返回/刷新）
   KeyEventResult _handleGlobalKey(FocusNode node, KeyEvent event) {
     if (event is RawKeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.select) {
@@ -375,6 +377,11 @@ body: _buildBody(context, themeService),
         // Menu/Back 键尝试返回上一页
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
+          return KeyEventResult.handled;
+        }
+        // 根页面（无法返回）时，触发全局 Menu 刷新（tvOS 首页下拉刷新的替代方案）
+        if (widget.onMenuRefresh != null) {
+          widget.onMenuRefresh!();
           return KeyEventResult.handled;
         }
       }

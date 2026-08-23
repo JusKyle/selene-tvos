@@ -152,6 +152,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// 构建可滚动的内容区域
+  ///
+  /// tvOS 上没有触摸拖拽，隐藏下拉刷新指示器，改为通过全局 Menu 键触发刷新
+  Widget _buildScrollableTabContent(Widget child) {
+    if (PlatformDetector.isTVOS) {
+      return child;
+    }
+    return StyledRefreshIndicator(
+      onRefresh: _refreshHomeData,
+      refreshText: '刷新中...',
+      primaryColor: const Color(0xFF27AE60),
+      child: child,
+    );
+  }
+
   /// 构建首页内容（带 PageView 支持滑动切换）
   Widget _buildHomeContentWithPageView() {
     return Column(
@@ -207,11 +222,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 构建首页标签内容
   Widget _buildHomeTabContent() {
-    return StyledRefreshIndicator(
-      onRefresh: _refreshHomeData,
-      refreshText: '刷新中...',
-      primaryColor: const Color(0xFF27AE60),
-      child: SingleChildScrollView(
+    return _buildScrollableTabContent(
+      SingleChildScrollView(
         child: Column(
           children: [
             const SizedBox(height: 8),
@@ -330,11 +342,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 构建播放历史标签内容
   Widget _buildHistoryTabContent() {
-    return StyledRefreshIndicator(
-      onRefresh: _refreshHomeData,
-      refreshText: '刷新中...',
-      primaryColor: const Color(0xFF27AE60),
-      child: SingleChildScrollView(
+    return _buildScrollableTabContent(
+      SingleChildScrollView(
         child: Column(
           children: [
             const SizedBox(height: 4),
@@ -350,11 +359,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 构建收藏夹标签内容
   Widget _buildFavoritesTabContent() {
-    return StyledRefreshIndicator(
-      onRefresh: _refreshHomeData,
-      refreshText: '刷新中...',
-      primaryColor: const Color(0xFF27AE60),
-      child: SingleChildScrollView(
+    return _buildScrollableTabContent(
+      SingleChildScrollView(
         child: Column(
           children: [
             const SizedBox(height: 4),
@@ -396,6 +402,8 @@ class _HomeScreenState extends State<HomeScreen> {
       onTopTabChanged: _onTopTabChanged,
       onHomeTap: _onHomeTap,
       onSearchTap: _onSearchTap,
+      // tvOS: 根页面按 Menu 键触发刷新（下拉刷新替代方案）
+      onMenuRefresh: _refreshHomeData,
     );
   }
 
@@ -491,6 +499,28 @@ class _HomeScreenState extends State<HomeScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => const SearchScreen(),
+        ),
+      ).then((_) {
+        // 从搜索页面返回时刷新数据
+        if (mounted) {
+          _refreshOnResume();
+        }
+      });
+    } else if (PlatformDetector.isTVOS) {
+      // tvOS 使用淡入过渡动画
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const SearchScreen(),
+          transitionDuration: const Duration(milliseconds: 250),
+          reverseTransitionDuration: const Duration(milliseconds: 250),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
         ),
       ).then((_) {
         // 从搜索页面返回时刷新数据

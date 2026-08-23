@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../services/theme_service.dart';
 import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
+import '../core/platform_detector.dart';
+import 'tv_focusable.dart';
 
 class TopTabSwitcher extends StatefulWidget {
   final String selectedTab;
@@ -169,7 +171,7 @@ class _TopTabSwitcherState extends State<TopTabSwitcher>
             ? _isHoveringHistory
             : _isHoveringFavorites;
 
-    return SizedBox(
+    final Widget button = SizedBox(
       height: 32,
       child: MouseRegion(
         cursor: isPC ? SystemMouseCursors.click : MouseCursor.defer,
@@ -200,12 +202,14 @@ class _TopTabSwitcherState extends State<TopTabSwitcher>
               }
             : null,
         child: GestureDetector(
-          onTap: () {
-            // 防止动画进行中的重复点击
-            if (!_animationController.isAnimating) {
-              widget.onTabChanged(label);
-            }
-          },
+          onTap: PlatformDetector.isTVOS
+              ? null // tvOS 由外层 TVFocusableWidget 处理 Select 按键
+              : () {
+                  // 防止动画进行中的重复点击
+                  if (!_animationController.isAnimating) {
+                    widget.onTabChanged(label);
+                  }
+                },
           behavior: HitTestBehavior.opaque,
           child: AnimatedBuilder(
             animation: _animation,
@@ -277,5 +281,20 @@ class _TopTabSwitcherState extends State<TopTabSwitcher>
         ),
       ),
     );
+
+    // tvOS 平台使用 Focus 高亮组件包裹，支持遥控器方向键导航
+    if (PlatformDetector.isTVOS) {
+      return TVFocusableWidget(
+        onTap: () {
+          // 防止动画进行中的重复点击
+          if (!_animationController.isAnimating) {
+            widget.onTabChanged(label);
+          }
+        },
+        scale: 1.08,
+        child: button,
+      );
+    }
+    return button;
   }
 }
