@@ -153,10 +153,7 @@ class _SearchResultAggGridState extends State<SearchResultAggGrid>
         );
 
         // tvOS 平台包裹 TVFocusGrid 确保焦点导航顺序
-        if (PlatformDetector.isTVOS) {
-          return TVFocusGrid(child: gridView);
-        }
-        return gridView;
+        return TVFocusGrid(child: gridView);
       },
     );
   }

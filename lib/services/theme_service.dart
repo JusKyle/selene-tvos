@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import '../core/platform_detector.dart';
 
 class ThemeService extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
 
-  ThemeMode get themeMode => _themeMode;
   bool get isDarkMode {
     if (_themeMode == ThemeMode.dark) return true;
     if (_themeMode == ThemeMode.light) return false;
@@ -50,49 +48,6 @@ class ThemeService extends ChangeNotifier {
   }
 
   ThemeData get lightTheme {
-    // Windows 下使用微软雅黑以获得更好的中文渲染
-    final textTheme = PlatformDetector.isWindows
-        ? ThemeData.light().textTheme.copyWith(
-              bodyLarge: const TextStyle(
-                color: Color(0xFF2c3e50),
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Microsoft YaHei',
-              ),
-              bodyMedium: const TextStyle(
-                color: Color(0xFF2c3e50),
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Microsoft YaHei',
-              ),
-              bodySmall: const TextStyle(
-                color: Color(0xFF7f8c8d),
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Microsoft YaHei',
-              ),
-              titleLarge: const TextStyle(
-                color: Color(0xFF2c3e50),
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Microsoft YaHei',
-              ),
-              titleMedium: const TextStyle(
-                color: Color(0xFF2c3e50),
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Microsoft YaHei',
-              ),
-              titleSmall: const TextStyle(
-                color: Color(0xFF2c3e50),
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Microsoft YaHei',
-              ),
-            )
-        : const TextTheme(
-            bodyLarge: TextStyle(color: Color(0xFF2c3e50)),
-            bodyMedium: TextStyle(color: Color(0xFF2c3e50)),
-            bodySmall: TextStyle(color: Color(0xFF7f8c8d)),
-            titleLarge: TextStyle(color: Color(0xFF2c3e50)),
-            titleMedium: TextStyle(color: Color(0xFF2c3e50)),
-            titleSmall: TextStyle(color: Color(0xFF2c3e50)),
-          );
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
@@ -110,55 +65,18 @@ class ThemeService extends ChangeNotifier {
         color: Color(0xFFffffff),
         elevation: 2,
       ),
-      textTheme: textTheme,
-      fontFamily: PlatformDetector.isWindows ? 'Microsoft YaHei' : null,
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: Color(0xFF2c3e50)),
+        bodyMedium: TextStyle(color: Color(0xFF2c3e50)),
+        bodySmall: TextStyle(color: Color(0xFF7f8c8d)),
+        titleLarge: TextStyle(color: Color(0xFF2c3e50)),
+        titleMedium: TextStyle(color: Color(0xFF2c3e50)),
+        titleSmall: TextStyle(color: Color(0xFF2c3e50)),
+      ),
     );
   }
 
   ThemeData get darkTheme {
-    // Windows 下使用微软雅黑以获得更好的中文渲染
-    final textTheme = PlatformDetector.isWindows
-        ? ThemeData.dark().textTheme.copyWith(
-              bodyLarge: const TextStyle(
-                color: Color(0xFFffffff),
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Microsoft YaHei',
-              ),
-              bodyMedium: const TextStyle(
-                color: Color(0xFFffffff),
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Microsoft YaHei',
-              ),
-              bodySmall: const TextStyle(
-                color: Color(0xFFb0b0b0),
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Microsoft YaHei',
-              ),
-              titleLarge: const TextStyle(
-                color: Color(0xFFffffff),
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Microsoft YaHei',
-              ),
-              titleMedium: const TextStyle(
-                color: Color(0xFFffffff),
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Microsoft YaHei',
-              ),
-              titleSmall: const TextStyle(
-                color: Color(0xFFffffff),
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Microsoft YaHei',
-              ),
-            )
-        : const TextTheme(
-            bodyLarge: TextStyle(color: Color(0xFFffffff)),
-            bodyMedium: TextStyle(color: Color(0xFFffffff)),
-            bodySmall: TextStyle(color: Color(0xFFb0b0b0)),
-            titleLarge: TextStyle(color: Color(0xFFffffff)),
-            titleMedium: TextStyle(color: Color(0xFFffffff)),
-            titleSmall: TextStyle(color: Color(0xFFffffff)),
-          );
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -176,8 +94,14 @@ class ThemeService extends ChangeNotifier {
         color: Color(0xFF1e1e1e),
         elevation: 2,
       ),
-      textTheme: textTheme,
-      fontFamily: PlatformDetector.isWindows ? 'Microsoft YaHei' : null,
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: Color(0xFFffffff)),
+        bodyMedium: TextStyle(color: Color(0xFFffffff)),
+        bodySmall: TextStyle(color: Color(0xFFb0b0b0)),
+        titleLarge: TextStyle(color: Color(0xFFffffff)),
+        titleMedium: TextStyle(color: Color(0xFFffffff)),
+        titleSmall: TextStyle(color: Color(0xFFffffff)),
+      ),
     );
   }
 

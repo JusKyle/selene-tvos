@@ -39,28 +39,10 @@ class SeleneApp extends StatelessWidget {
             title: 'Selene',
             debugShowCheckedModeBanner: false,
             // tvOS 强制使用暗色高对比度主题（10-foot UI）
-            theme: PlatformDetector.isTVOS
-                ? themeService.tvTheme
-                : themeService.lightTheme,
-            darkTheme: PlatformDetector.isTVOS
-                ? themeService.tvTheme
-                : themeService.darkTheme,
-            themeMode: PlatformDetector.isTVOS
-                ? ThemeMode.dark
-                : themeService.themeMode,
+            theme: themeService.tvTheme,
+            darkTheme: themeService.tvTheme,
+            themeMode: ThemeMode.dark,
             home: const AppWrapper(),
-            builder: (context, child) {
-              // 为 Windows 平台改善字体渲染
-              if (PlatformDetector.isWindows) {
-                return MediaQuery(
-                  data: MediaQuery.of(context).copyWith(
-                    textScaler: const TextScaler.linear(1.0),
-                  ),
-                  child: child!,
-                );
-              }
-              return child!;
-            },
           );
         },
       ),
