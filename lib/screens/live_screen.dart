@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../core/platform_detector.dart';
 import '../services/live_service.dart';
 import '../models/live_channel.dart';
 import '../models/live_source.dart';
@@ -9,6 +11,8 @@ import 'package:provider/provider.dart';
 import 'live_player_screen.dart';
 import '../widgets/filter_pill_hover.dart';
 import '../widgets/filter_options_selector.dart';
+import '../widgets/tv_focusable.dart';
+import '../widgets/tv_focus_grid.dart';
 
 class LiveScreen extends StatefulWidget {
   const LiveScreen({super.key});
@@ -27,6 +31,7 @@ class _LiveScreenState extends State<LiveScreen>
   bool _isInitialLoad = true; // 标记是否是首次加载
   String? _errorMessage;
   String _selectedGroup = '全部';
+  LiveChannel? _lastPlayedChannel; // 最近播放的频道（tvOS 绿色高亮）
   final ScrollController _scrollController = ScrollController();
   late AnimationController _refreshIconController;
   bool _isRefreshButtonHovered = false;
@@ -282,9 +287,13 @@ class _LiveScreenState extends State<LiveScreen>
   Widget build(BuildContext context) {
     return Consumer<ThemeService>(
       builder: (context, themeService, child) {
-        return Column(
+        final column = Column(
           children: [
-            _buildTopBar(themeService),
+            // tvOS 使用 Focus 横向 pill 列表，其它平台保持原有顶部栏
+            if (PlatformDetector.isTVOS)
+              _buildTVTopBar(themeService)
+            else
+              _buildTopBar(themeService),
             Expanded(
               child: _isRefreshing
                   ? _buildRefreshingView(themeService)
@@ -292,10 +301,21 @@ class _LiveScreenState extends State<LiveScreen>
                       ? _buildLoadingView(themeService)
                       : _errorMessage != null
                           ? _buildErrorView(themeService)
-                          : _buildChannelList(themeService),
+                          : PlatformDetector.isTVOS
+                              ? _buildTVChannelList(themeService)
+                              : _buildChannelList(themeService),
             ),
           ],
         );
+
+        // tvOS：外层 Focus 遍历组，串联顶部筛选栏与频道列表
+        if (PlatformDetector.isTVOS) {
+          return FocusTraversalGroup(
+            order: TVGridFocusTraversal(),
+            child: column,
+          );
+        }
+        return column;
       },
     );
   }
@@ -692,6 +712,313 @@ class _LiveScreenState extends State<LiveScreen>
         });
       },
       buildChannelLogo: _buildChannelLogo,
+    );
+  }
+
+  // ---- tvOS 分支 ----
+
+  /// tvOS 顶部筛选栏：直播源 + 分组 pill 横向 Focus 遍历
+  Widget _buildTVTopBar(ThemeService themeService) {
+    final allGroups = ['全部', ..._channelGroups.map((g) => g.name)];
+    final showSourceFilter = _liveSources.length > 1;
+    final showGroupFilter = !_isInitialLoad && _channelGroups.isNotEmpty;
+
+    return Container(
+      color: Colors.transparent,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: FocusTraversalGroup(
+        order: TVGridFocusTraversal(),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              // 直播源筛选（只有多个源时显示）
+              if (showSourceFilter) ...[
+                _buildTVFilterLabel('直播源', themeService),
+                for (final source in _liveSources)
+                  _buildTVFilterPill(
+                    label: source.name,
+                    isSelected: source.key == _currentSource?.key,
+                    onTap: () {
+                      final target = source;
+                      setState(() {
+                        _currentSource = target;
+                        _selectedGroup = '全部';
+                      });
+                      _loadChannels(source: target);
+                      _scrollToTop();
+                    },
+                    themeService: themeService,
+                  ),
+                const SizedBox(width: 24),
+              ],
+              // 分组筛选
+              if (showGroupFilter) ...[
+                _buildTVFilterLabel('分组', themeService),
+                for (final group in allGroups)
+                  _buildTVFilterPill(
+                    label: group,
+                    isSelected: group == _selectedGroup,
+                    onTap: () {
+                      setState(() {
+                        _selectedGroup = group;
+                      });
+                      _scrollToTop();
+                    },
+                    themeService: themeService,
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTVFilterLabel(String text, ThemeService themeService) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Text(
+        text,
+        style: FontUtils.poppins(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: themeService.isDarkMode
+              ? const Color(0xFF999999)
+              : const Color(0xFF7f8c8d),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTVFilterPill({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required ThemeService themeService,
+  }) {
+    final bool isDefault = label == '全部';
+    return Padding(
+      padding: const EdgeInsets.only(right: 10),
+      child: TVFocusableWidget(
+        scale: 1.06,
+        borderWidth: 2.0,
+        borderColor: isSelected ? const Color(0xFF27ae60) : Colors.white,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xFF27ae60).withValues(alpha: 0.25)
+                : (themeService.isDarkMode
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.06)),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            label,
+            style: FontUtils.poppins(
+              fontSize: 14,
+              fontWeight: isSelected || isDefault
+                  ? FontWeight.w600
+                  : FontWeight.w400,
+              color: isSelected
+                  ? const Color(0xFF27ae60)
+                  : (themeService.isDarkMode
+                      ? Colors.white
+                      : const Color(0xFF2c3e50)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// tvOS：左右方向键切换分组
+  void _switchTVGroup(int delta) {
+    if (_channelGroups.isEmpty) return;
+    final allGroups = ['全部', ..._channelGroups.map((g) => g.name)];
+    final currentIndex = allGroups.indexOf(_selectedGroup);
+    if (currentIndex == -1) return;
+    final newIndex = (currentIndex + delta) % allGroups.length;
+    final target = allGroups[newIndex < 0 ? newIndex + allGroups.length : newIndex];
+    if (target == _selectedGroup) return;
+    setState(() {
+      _selectedGroup = target;
+    });
+    _scrollToTop();
+  }
+
+  /// tvOS 频道列表：TVFocusableWidget 纵向导航，左右键切换分组
+  Widget _buildTVChannelList(ThemeService themeService) {
+    final channels = _getFilteredChannels();
+
+    if (channels.isEmpty) {
+      return Center(
+        child: Text(
+          '暂无频道',
+          style: FontUtils.poppins(
+            color: themeService.isDarkMode
+                ? const Color(0xFFb0b0b0)
+                : const Color(0xFF7f8c8d),
+          ),
+        ),
+      );
+    }
+
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            _switchTVGroup(-1);
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+            _switchTVGroup(1);
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: TVFocusGrid(
+        child: ListView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          itemCount: channels.length,
+          itemBuilder: (context, index) {
+            return _buildTVChannelCard(
+              channels[index],
+              themeService,
+              autofocus: index == 0,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// tvOS 频道卡片：当前频道绿色高亮，Focus 时白色边框 + 缩放
+  Widget _buildTVChannelCard(
+    LiveChannel channel,
+    ThemeService themeService, {
+    bool autofocus = false,
+  }) {
+    final bool isCurrent = _lastPlayedChannel?.id == channel.id;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: TVFocusableWidget(
+        autofocus: autofocus,
+        scale: 1.03,
+        borderColor: isCurrent ? const Color(0xFF27ae60) : Colors.white,
+        onTap: () {
+          setState(() {
+            _lastPlayedChannel = channel;
+          });
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LivePlayerScreen(
+                channel: channel,
+                source: _currentSource!,
+              ),
+            ),
+          ).then((_) {
+            if (mounted) {
+              _loadChannels();
+            }
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: themeService.isDarkMode
+                ? (isCurrent
+                    ? const Color(0xFF27ae60).withValues(alpha: 0.18)
+                    : const Color(0xFF1e1e1e))
+                : (isCurrent
+                    ? const Color(0xFF27ae60).withValues(alpha: 0.12)
+                    : Colors.white),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              // 台标
+              SizedBox(
+                width: 56,
+                height: 28,
+                child: channel.logo.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: Image.network(
+                          channel.logo,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildTVChannelLogoFallback(themeService),
+                          loadingBuilder: (context, child, loadingProgress) =>
+                              _buildTVChannelLogoFallback(themeService),
+                        ),
+                      )
+                    : _buildTVChannelLogoFallback(themeService),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      channel.name,
+                      style: FontUtils.poppins(
+                        fontSize: 15,
+                        fontWeight:
+                            isCurrent ? FontWeight.w600 : FontWeight.w500,
+                        color: isCurrent
+                            ? const Color(0xFF27ae60)
+                            : (themeService.isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF2c3e50)),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      channel.group,
+                      style: FontUtils.poppins(
+                        fontSize: 12,
+                        color: themeService.isDarkMode
+                            ? const Color(0xFF999999)
+                            : const Color(0xFF7f8c8d),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTVChannelLogoFallback(ThemeService themeService) {
+    return Container(
+      decoration: BoxDecoration(
+        color: themeService.isDarkMode
+            ? const Color(0xFF2a2a2a)
+            : const Color(0xFFc0c0c0),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: const Icon(
+        Icons.tv,
+        size: 18,
+        color: Color(0xFF95a5b0),
+      ),
     );
   }
 
