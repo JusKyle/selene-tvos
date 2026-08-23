@@ -123,7 +123,7 @@ class PageCacheService
 
     try {
       if (!context.mounted) {
-        return DataOperationResult.error('页面已销毁');
+        return;
       }
       final response = await ApiService.get<Map<String, dynamic>>(
         '/api/playrecords',
