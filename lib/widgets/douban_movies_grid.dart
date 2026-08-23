@@ -2,11 +2,13 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/douban_movie.dart';
 import '../utils/device_utils.dart';
+import '../core/platform_detector.dart';
 import 'video_card.dart';
 import 'video_menu_bottom_sheet.dart';
 import '../models/video_info.dart';
 import '../utils/font_utils.dart';
 import 'shimmer_effect.dart';
+import 'tv_focus_grid.dart';
 
 class DoubanMoviesGrid extends StatelessWidget {
   final List<DoubanMovie>? movies;
@@ -188,7 +190,7 @@ class DoubanMoviesGrid extends StatelessWidget {
         final double itemWidth = math.max(calculatedItemWidth, minItemWidth);
         final double itemHeight = itemWidth * 2.0;
         
-        return GridView.builder(
+        final gridView = GridView.builder(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -202,17 +204,23 @@ class DoubanMoviesGrid extends StatelessWidget {
           itemBuilder: (context, index) {
             final movie = movies![index];
             final videoInfo = movie.toVideoInfo();
-            
+
             return VideoCard(
               videoInfo: videoInfo,
               onTap: () => onVideoTap(videoInfo),
               from: 'douban',
               cardWidth: itemWidth,
               onGlobalMenuAction: onGlobalMenuAction != null ? (action) => onGlobalMenuAction!(videoInfo, action) : null,
-              isFavorited: false, 
+              isFavorited: false,
             );
           },
         );
+
+        // tvOS 平台包裹 TVFocusGrid 确保焦点导航顺序
+        if (PlatformDetector.isTVOS) {
+          return TVFocusGrid(child: gridView);
+        }
+        return gridView;
       },
     );
   }

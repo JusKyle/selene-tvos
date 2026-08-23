@@ -6,8 +6,10 @@ import '../models/video_info.dart';
 import '../services/theme_service.dart';
 import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
+import '../core/platform_detector.dart';
 import 'video_card.dart';
 import 'video_menu_bottom_sheet.dart';
+import 'tv_focus_grid.dart';
 
 /// 聚合搜索结果网格组件
 class SearchResultAggGrid extends StatefulWidget {
@@ -116,7 +118,7 @@ class _SearchResultAggGridState extends State<SearchResultAggGrid>
         final double itemWidth = math.max(calculatedItemWidth, minItemWidth);
         final double itemHeight = itemWidth * 2.0; // 增加高度比例，确保有足够空间避免溢出
         
-        return GridView.builder(
+        final gridView = GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
@@ -149,6 +151,12 @@ class _SearchResultAggGridState extends State<SearchResultAggGrid>
             );
           },
         );
+
+        // tvOS 平台包裹 TVFocusGrid 确保焦点导航顺序
+        if (PlatformDetector.isTVOS) {
+          return TVFocusGrid(child: gridView);
+        }
+        return gridView;
       },
     );
   }
