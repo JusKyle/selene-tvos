@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:async';
+import '../core/platform_detector.dart';
 import '../services/user_data_service.dart';
 import '../services/local_mode_storage_service.dart';
 import '../services/subscription_service.dart';
@@ -546,7 +547,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             // Windows 自定义标题栏（透明背景）
-            if (Platform.isWindows) const WindowsTitleBar(forceBlack: true),
+            if (PlatformDetector.isWindows) const WindowsTitleBar(forceBlack: true),
             // 主要内容
             Expanded(
               child: SafeArea(

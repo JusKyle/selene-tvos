@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../core/platform_detector.dart';
 import '../widgets/continue_watching_section.dart';
 import '../widgets/hot_movies_section.dart';
 import '../widgets/hot_tv_section.dart';
@@ -487,7 +488,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 处理点击搜索按钮
   void _onSearchTap() {
-    if (Platform.isIOS) {
+    if (PlatformDetector.isIOS) {
       Navigator.push(
         context,
         MaterialPageRoute(

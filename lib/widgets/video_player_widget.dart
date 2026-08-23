@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import '../core/platform_detector.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -353,7 +354,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
   }
 
   void _setupPip() {
-    if (!Platform.isAndroid && !Platform.isIOS) {
+    if (!PlatformDetector.isAndroid && !PlatformDetector.isIOS) {
       return;
     }
     _pip.setup(const PipOptions(
@@ -367,7 +368,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
   }
 
   void _registerPipObserver() {
-    if (!Platform.isAndroid && !Platform.isIOS) {
+    if (!PlatformDetector.isAndroid && !PlatformDetector.isIOS) {
       return;
     }
     _pip.registerStateChangedObserver(PipStateChangedObserver(
@@ -461,7 +462,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (PlatformDetector.isAndroid || PlatformDetector.isIOS) {
       _pip.unregisterStateChangedObserver();
       _pip.dispose();
     }

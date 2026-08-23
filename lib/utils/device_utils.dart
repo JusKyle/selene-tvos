@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../core/platform_detector.dart';
 
 /// 设备类型工具类
 class DeviceUtils {
@@ -36,12 +37,17 @@ class DeviceUtils {
 
   /// 判断当前平台是否是 Windows
   static bool isWindows() {
-    return Platform.isWindows;
+    return PlatformDetector.isWindows;
   }
 
   /// 判断当前平台是否是 macOS
   static bool isMacOS() {
-    return Platform.isMacOS;
+    return PlatformDetector.isMacOS;
+  }
+
+  /// 判断当前平台是否是 tvOS
+  static bool isTVOS() {
+    return PlatformDetector.isTVOS;
   }
 
   /// 判断当前平台是否是 PC（Windows 或 macOS）

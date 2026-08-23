@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import '../core/platform_detector.dart';
 import 'package:flutter/services.dart';
 import '../widgets/video_player_surface.dart';
 import '../widgets/video_player_widget.dart';
@@ -445,7 +446,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
               Column(
                 children: [
                   // Windows 自定义标题栏
-                  if (Platform.isWindows)
+                  if (PlatformDetector.isWindows)
                     const WindowsTitleBar(
                       customBackgroundColor: Color(0xFF000000),
                     ),
@@ -469,7 +470,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
                 ],
               ),
               // 状态栏黑色背景（覆盖在最上层）
-              if (!Platform.isWindows)
+              if (!PlatformDetector.isWindows)
                 Positioned(
                   top: 0,
                   left: 0,

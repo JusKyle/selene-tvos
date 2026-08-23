@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import '../core/platform_detector.dart';
 import 'package:flutter/services.dart';
 import '../widgets/video_player_surface.dart';
 import '../widgets/video_player_widget.dart';
@@ -2661,7 +2662,7 @@ class _PlayerScreenState extends State<PlayerScreen>
           child: Column(
             children: [
               // Windows 自定义标题栏（播放页使用纯黑背景）
-              if (Platform.isWindows)
+              if (PlatformDetector.isWindows)
                 const WindowsTitleBar(
                   customBackgroundColor: Color(0xFF000000),
                 ),

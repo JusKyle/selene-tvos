@@ -10,6 +10,7 @@ import 'services/douban_cache_service.dart';
 import 'services/local_mode_storage_service.dart';
 import 'services/subscription_service.dart';
 import 'dart:io' show Platform;
+import 'core/platform_detector.dart';
 import 'package:macos_window_utils/macos_window_utils.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -17,11 +18,15 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  PlatformDetector.init();
+
   // 初始化 media_kit (用于 PC 端播放器)
-  MediaKit.ensureInitialized();
+  if (!PlatformDetector.isTVOS) {
+    MediaKit.ensureInitialized();
+  }
 
   // 初始化 macOS 窗口配置
-  if (Platform.isMacOS) {
+  if (PlatformDetector.isMacOS) {
     await WindowManipulator.initialize(enableWindowDelegate: true);
     // 设置标题栏为透明，让菜单栏颜色跟随主题
     await WindowManipulator.makeTitlebarTransparent();
@@ -40,7 +45,7 @@ void main() async {
   runApp(const SeleneApp());
 
   // 初始化 Windows 窗口配置
-  if (Platform.isWindows) {
+  if (PlatformDetector.isWindows) {
     doWhenWindowReady(() {
       final win = appWindow;
       const initialSize = Size(1024, 600);
@@ -72,7 +77,7 @@ class SeleneApp extends StatelessWidget {
             home: const AppWrapper(),
             builder: (context, child) {
               // 为 Windows 平台改善字体渲染
-              if (Platform.isWindows) {
+              if (PlatformDetector.isWindows) {
                 return MediaQuery(
                   data: MediaQuery.of(context).copyWith(
                     textScaler: const TextScaler.linear(1.0),

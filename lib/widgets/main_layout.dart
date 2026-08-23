@@ -11,6 +11,7 @@ import 'user_menu.dart';
 import 'dart:io' show Platform;
 import 'dart:async';
 import 'windows_title_bar.dart';
+import '../core/platform_detector.dart';
 
 class MainLayout extends StatefulWidget {
   final Widget content;
@@ -313,7 +314,7 @@ class _MainLayoutState extends State<MainLayout> {
                         child: Column(
                           children: [
                             // Windows 自定义标题栏
-                            if (Platform.isWindows)
+                            if (PlatformDetector.isWindows)
                               WindowsTitleBar(
                                 customBackgroundColor: widget.isSearchMode
                                     ? (themeService.isDarkMode
@@ -360,7 +361,7 @@ class _MainLayoutState extends State<MainLayout> {
     // Windows 下不需要额外 padding，因为自定义标题栏已经占据了空间
     final topPadding = DeviceUtils.isMacOS()
         ? MediaQuery.of(context).padding.top + 32
-        : Platform.isWindows
+        : PlatformDetector.isWindows
             ? 8.0
             : MediaQuery.of(context).padding.top + 8;
 

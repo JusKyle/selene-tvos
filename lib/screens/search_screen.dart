@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../core/platform_detector.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../services/page_cache_service.dart';
@@ -599,7 +600,7 @@ class _SearchScreenState extends State<SearchScreen>
             Navigator.pop(context);
           },
         );
-        if (Platform.isIOS) {
+        if (PlatformDetector.isIOS) {
           return PopScope(
             canPop: true, // 允许返回
             child: ml,

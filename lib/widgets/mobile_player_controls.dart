@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../core/platform_detector.dart';
 import 'package:intl/intl.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -890,7 +891,7 @@ class _MobilePlayerControlsState extends State<MobilePlayerControls> {
                       ),
                     ),
                   ),
-                if (Platform.isAndroid)
+                if (PlatformDetector.isAndroid)
                   GestureDetector(
                     onTap: () async {
                       print('PIP button clicked!');

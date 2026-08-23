@@ -58,6 +58,7 @@ dependencies:
   media_kit: ^1.2.3
   media_kit_video: ^2.0.1
   media_kit_libs_video: ^1.0.7
+  video_player: ^2.9.2
   package_info_plus: ^8.0.0
   bitsdojo_window: ^0.1.6
   volume_controller: ^3.4.0

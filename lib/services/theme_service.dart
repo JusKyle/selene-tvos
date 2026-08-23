@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io' show Platform;
+import '../core/platform_detector.dart';
 import 'package:macos_window_utils/macos_window_utils.dart';
 
 class ThemeService extends ChangeNotifier {
@@ -34,7 +35,7 @@ class ThemeService extends ChangeNotifier {
 
   // 更新 macOS 窗口外观
   void _updateMacOSWindowAppearance() async {
-    if (!Platform.isMacOS) return;
+    if (!PlatformDetector.isMacOS) return;
 
     try {
       // 使用 WindowManipulator.overrideMacOSBrightness 来设置窗口外观
@@ -71,7 +72,7 @@ class ThemeService extends ChangeNotifier {
 
   ThemeData get lightTheme {
     // Windows 下使用微软雅黑以获得更好的中文渲染
-    final textTheme = Platform.isWindows
+    final textTheme = PlatformDetector.isWindows
         ? ThemeData.light().textTheme.copyWith(
               bodyLarge: const TextStyle(
                 color: Color(0xFF2c3e50),
@@ -131,13 +132,13 @@ class ThemeService extends ChangeNotifier {
         elevation: 2,
       ),
       textTheme: textTheme,
-      fontFamily: Platform.isWindows ? 'Microsoft YaHei' : null,
+      fontFamily: PlatformDetector.isWindows ? 'Microsoft YaHei' : null,
     );
   }
 
   ThemeData get darkTheme {
     // Windows 下使用微软雅黑以获得更好的中文渲染
-    final textTheme = Platform.isWindows
+    final textTheme = PlatformDetector.isWindows
         ? ThemeData.dark().textTheme.copyWith(
               bodyLarge: const TextStyle(
                 color: Color(0xFFffffff),
@@ -197,7 +198,7 @@ class ThemeService extends ChangeNotifier {
         elevation: 2,
       ),
       textTheme: textTheme,
-      fontFamily: Platform.isWindows ? 'Microsoft YaHei' : null,
+      fontFamily: PlatformDetector.isWindows ? 'Microsoft YaHei' : null,
     );
   }
 }

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder.AppleTV.Storyboard" version="1.0" toolsVersion="22505" targetRuntime="AppleTV" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="0KQ8n-sn-95" orientation="landscape" appearance="light"/>
+    <dependencies>
+        <deployment identifier="tvOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22504"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="Lfm-lW-A0W"/>
+                        <viewControllerLayoutGuide type="bottom" id="XB0-JY-P6E"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="1920" height="1080"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" image="LaunchImage" translatesAutoresizingMaskIntoConstraints="NO" id="1U8-8C-A6h">
+                                <rect key="frame" x="0.0" y="0.0" width="1920" height="1080"/>
+                            </imageView>
+                        </subviews>
+                        <constraints>
+                            <constraint firstItem="1U8-8C-A6h" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="3fD-kN-EGm"/>
+                            <constraint firstAttribute="bottom" secondItem="1U8-8C-A6h" secondAttribute="bottom" id="6WZ-WG-fQo"/>
+                            <constraint firstAttribute="trailing" secondItem="1U8-8C-A6h" secondAttribute="trailing" id="QXQ-Yo-tYf"/>
+                            <constraint firstItem="1U8-8C-A6h" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="UVP-wp-fU4"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="53" y="375"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="LaunchImage" width="1920" height="1080"/>
+    </resources>
+</document>

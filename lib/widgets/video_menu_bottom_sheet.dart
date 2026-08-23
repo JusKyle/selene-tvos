@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../core/platform_detector.dart';
 import '../models/video_info.dart';
 import '../models/douban_movie.dart';
 import '../models/bangumi.dart';
@@ -19,7 +20,7 @@ import '../utils/font_utils.dart';
 bool get _isIOS {
   if (kIsWeb) return false;
   try {
-    return Platform.isIOS;
+    return PlatformDetector.isIOS;
   } catch (e) {
     return false;
   }
