@@ -153,7 +153,7 @@ class DoubanService {
       }
     } catch (e) {
       // 缓存读取失败，继续执行网络请求
-      print('读取缓存失败: $e');
+      debugPrint('读取缓存失败: $e');
     }
     // 获取用户存储的豆瓣数据源选项
     final dataSourceKey = await UserDataService.getDoubanDataSourceKey();
@@ -206,7 +206,7 @@ class DoubanService {
               const Duration(hours: 6),
             );
           } catch (cacheError) {
-            print('缓存数据失败: $cacheError');
+            debugPrint('缓存数据失败: $cacheError');
           }
           
           return ApiResponse.success(doubanResponse.items, statusCode: response.statusCode);
@@ -320,7 +320,7 @@ class DoubanService {
       }
     } catch (e) {
       // 缓存读取失败，继续执行网络请求
-      print('读取缓存失败: $e');
+      debugPrint('读取缓存失败: $e');
     }
     // 处理筛选参数，将 'all' 转换为空字符串
     String category = params.category == 'all' ? '' : params.category;
@@ -436,7 +436,7 @@ class DoubanService {
               const Duration(hours: 6),
             );
           } catch (cacheError) {
-            print('缓存数据失败: $cacheError');
+            debugPrint('缓存数据失败: $cacheError');
           }
 
           return ApiResponse.success(filteredItems, statusCode: response.statusCode);
@@ -528,7 +528,7 @@ class DoubanService {
       }
     } catch (e) {
       // 缓存读取失败，继续执行网络请求
-      print('读取豆瓣详情缓存失败: $e');
+      debugPrint('读取豆瓣详情缓存失败: $e');
     }
 
     // 获取用户存储的豆瓣数据源选项
@@ -592,7 +592,7 @@ class DoubanService {
               const Duration(days: 3),
             );
           } catch (cacheError) {
-            print('缓存豆瓣详情数据失败: $cacheError');
+            debugPrint('缓存豆瓣详情数据失败: $cacheError');
           }
           
           return ApiResponse.success(details, statusCode: response.statusCode);

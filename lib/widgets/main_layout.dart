@@ -439,8 +439,8 @@ body: _buildBody(context, themeService),
                 ? const Color(0xFF121212)
                 : const Color(0xFFf5f5f5)
             : themeService.isDarkMode
-                ? const Color(0xFF1e1e1e).withOpacity(0.9)
-                : Colors.white.withOpacity(0.8),
+                ? const Color(0xFF1e1e1e).withValues(alpha: 0.9)
+                : Colors.white.withValues(alpha: 0.8),
       ),
       child: widget.isSearchMode
           ? _buildSearchHeader(context, themeService, isTablet)
@@ -566,7 +566,7 @@ body: _buildBody(context, themeService),
           boxShadow: PlatformDetector.isTVOS && _isSearchFieldFocused
               ? [
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                     blurRadius: 12,
                     spreadRadius: 2,
                   ),
@@ -982,13 +982,13 @@ body: _buildBody(context, themeService),
     final navBar = Container(
       decoration: BoxDecoration(
         color: themeService.isDarkMode
-            ? const Color(0xFF1e1e1e).withOpacity(0.9)
-            : Colors.white.withOpacity(0.9),
+            ? const Color(0xFF1e1e1e).withValues(alpha: 0.9)
+            : Colors.white.withValues(alpha: 0.9),
         border: Border(
           top: BorderSide(
             color: themeService.isDarkMode
-                ? const Color(0xFF333333).withOpacity(0.3)
-                : Colors.white.withOpacity(0.2),
+                ? const Color(0xFF333333).withValues(alpha: 0.3)
+                : Colors.white.withValues(alpha: 0.2),
             width: 1,
           ),
         ),

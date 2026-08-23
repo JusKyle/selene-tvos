@@ -93,7 +93,7 @@ class _TVFocusableWidgetState extends State<TVFocusableWidget> {
             borderRadius: BorderRadius.circular(8),
             boxShadow: _isFocused ? [
               BoxShadow(
-                color: widget.borderColor.withOpacity(0.3),
+                color: widget.borderColor.withValues(alpha: 0.3),
                 blurRadius: 12,
                 spreadRadius: 2,
               ),

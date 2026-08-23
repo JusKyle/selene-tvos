@@ -654,7 +654,7 @@ class _UserMenuState extends State<UserMenu> {
       child: GestureDetector(
         onTap: widget.onClose,
         child: Container(
-          color: Colors.black.withOpacity(0.3),
+          color: Colors.black.withValues(alpha: 0.3),
           child: Center(
             child: GestureDetector(
               onTap: () {}, // 阻止点击菜单内容时关闭
@@ -668,7 +668,7 @@ class _UserMenuState extends State<UserMenu> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -856,10 +856,10 @@ class _UserMenuState extends State<UserMenu> {
                           ),
                           child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 LucideIcons.trash2,
                                 size: 20,
-                                color: const Color(0xFFf59e0b),
+                                color: Color(0xFFf59e0b),
                               ),
                               const SizedBox(width: 12),
                               Text(
@@ -898,10 +898,10 @@ class _UserMenuState extends State<UserMenu> {
                             ),
                             child: Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   LucideIcons.download,
                                   size: 20,
-                                  color: const Color(0xFF3b82f6),
+                                  color: Color(0xFF3b82f6),
                                 ),
                                 const SizedBox(width: 12),
                                 Text(

@@ -41,7 +41,7 @@ class TVFullscreenPanel extends StatelessWidget {
   }) {
     return Navigator.of(context).push(PageRouteBuilder<T>(
       opaque: false,
-      barrierColor: Colors.black.withOpacity(0.5),
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       barrierDismissible: false,
       transitionDuration: const Duration(milliseconds: 200),
       reverseTransitionDuration: const Duration(milliseconds: 150),
@@ -102,7 +102,7 @@ class TVFullscreenPanel extends StatelessWidget {
         body: Container(
           width: double.infinity,
           height: double.infinity,
-          color: Colors.black.withOpacity(0.85),
+          color: Colors.black.withValues(alpha: 0.85),
           child: SafeArea(
             child: Focus(
               canRequestFocus: false,
@@ -183,7 +183,7 @@ class TVFullscreenPanel extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                 ),
                 child: const Icon(
                   Icons.close,

@@ -116,15 +116,15 @@ class _PlayerScreenState extends State<PlayerScreen>
     needPrefer = widget.prefer != null && widget.prefer == 'true';
     searchTitle = widget.stitle ?? '';
 
-    print('=== PlayerScreen 初始化参数 ===');
-    print('currentSource: $currentSource');
-    print('currentID: $currentID');
-    print('videoTitle: $videoTitle');
-    print('videoYear: $videoYear');
-    print('needPrefer: $needPrefer');
-    print('stitle: ${widget.stitle}');
-    print('stype: ${widget.stype}');
-    print('prefer: ${widget.prefer}');
+    debugPrint('=== PlayerScreen 初始化参数 ===');
+    debugPrint('currentSource: $currentSource');
+    debugPrint('currentID: $currentID');
+    debugPrint('videoTitle: $videoTitle');
+    debugPrint('videoYear: $videoYear');
+    debugPrint('needPrefer: $needPrefer');
+    debugPrint('stitle: ${widget.stitle}');
+    debugPrint('stype: ${widget.stype}');
+    debugPrint('prefer: ${widget.prefer}');
   }
 
   void initVideoData() async {
@@ -449,7 +449,7 @@ class _PlayerScreenState extends State<PlayerScreen>
 
   /// 动态更新视频数据源
   Future<void> updateVideoUrl(String newUrl, {Duration? startAt}) async {
-    print("newUrl: $newUrl, startAt: $startAt");
+    debugPrint("newUrl: $newUrl, startAt: $startAt");
     try {
       // 获取 M3U8 代理 URL
       final m3u8ProxyUrl = await UserDataService.getM3u8ProxyUrl();
@@ -459,7 +459,7 @@ class _PlayerScreenState extends State<PlayerScreen>
       if (m3u8ProxyUrl.isNotEmpty) {
         final encodedUrl = Uri.encodeComponent(newUrl);
         finalUrl = '$m3u8ProxyUrl$encodedUrl';
-        print("使用 M3U8 代理: $finalUrl");
+        debugPrint("使用 M3U8 代理: $finalUrl");
       }
 
       await _videoPlayerController?.updateDataSource(finalUrl,
@@ -718,7 +718,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.orange.withOpacity(0.3),
+                        color: Colors.orange.withValues(alpha: 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -751,10 +751,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8B4513).withOpacity(0.1),
+                    color: const Color(0xFF8B4513).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFF8B4513).withOpacity(0.3),
+                      color: const Color(0xFF8B4513).withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -1064,7 +1064,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                         width: 100,
                         height: 100,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2ecc71).withOpacity(0.3),
+                          color: const Color(0xFF2ecc71).withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(20),
                         ),
                       ),
@@ -1121,7 +1121,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         color: (isDarkMode ? Colors.white70 : Colors.black54)
-                            .withOpacity(
+                            .withValues(alpha: 
                           0.3 + (_textAnimationController.value * 0.7),
                         ),
                       ),

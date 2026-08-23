@@ -4,7 +4,7 @@ class PlatformDetector {
   static bool _isTVOS = false;
 
   static void init() {
-    _isTVOS = bool.fromEnvironment('TVOS', defaultValue: false);
+    _isTVOS = const bool.fromEnvironment('TVOS', defaultValue: false);
   }
 
   static bool get isTVOS => _isTVOS;

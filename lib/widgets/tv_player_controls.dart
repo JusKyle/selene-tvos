@@ -86,8 +86,8 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
   String _totalTime = '0:00';
 
   // 进度条焦点
-  FocusNode _progressFocusNode = FocusNode();
-  FocusNode _rootFocusNode = FocusNode();
+  final FocusNode _progressFocusNode = FocusNode();
+  final FocusNode _rootFocusNode = FocusNode();
   late FocusScopeNode _rootFocusScope;
 
   @override
@@ -130,7 +130,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
     final h = d.inHours;
     final m = d.inMinutes.remainder(60);
     final s = d.inSeconds.remainder(60);
-    final pad = (int v) => v.toString().padLeft(2, '0');
+    String pad(int v) => v.toString().padLeft(2, '0');
     if (h > 0) {
       return '$h:${pad(m)}:${pad(s)}';
     }
@@ -312,7 +312,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: cols,
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 24,
@@ -417,7 +417,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
     return LayoutBuilder(
       builder: (context, constraints) {
         // 控制栏高度
-        final barHeight = 140.0;
+        const barHeight = 140.0;
 
         return Stack(
           children: [
@@ -577,7 +577,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
+                  const Text(
                     '/',
                     style: TextStyle(
                       color: Colors.white54,
@@ -708,7 +708,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: CustomPaint(
-            size: Size(double.infinity, 16),
+            size: const Size(double.infinity, 16),
             painter: _ProgressBarPainter(
               progress: widget.duration.inMilliseconds > 0
                   ? widget.position.inMilliseconds /

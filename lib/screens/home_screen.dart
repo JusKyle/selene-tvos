@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       // 静默失败，不影响用户体验
-      print('检查更新失败: $e');
+      debugPrint('检查更新失败: $e');
     }
   }
 

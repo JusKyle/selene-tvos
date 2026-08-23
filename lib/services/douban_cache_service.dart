@@ -91,7 +91,7 @@ class DoubanCacheService {
       await _cleanExpiredCache();
     } catch (e) {
       if (kDebugMode) {
-        print('豆瓣缓存服务初始化失败: $e');
+        debugPrint('豆瓣缓存服务初始化失败: $e');
       }
     }
   }
@@ -212,7 +212,7 @@ class DoubanCacheService {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('设置豆瓣缓存失败: $e');
+        debugPrint('设置豆瓣缓存失败: $e');
       }
     }
   }
@@ -232,7 +232,7 @@ class DoubanCacheService {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('删除豆瓣缓存失败: $e');
+        debugPrint('删除豆瓣缓存失败: $e');
       }
     }
   }
@@ -275,7 +275,7 @@ class DoubanCacheService {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('清理过期豆瓣缓存失败: $e');
+        debugPrint('清理过期豆瓣缓存失败: $e');
       }
     }
   }
@@ -297,7 +297,7 @@ class DoubanCacheService {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('清空所有豆瓣缓存失败: $e');
+        debugPrint('清空所有豆瓣缓存失败: $e');
       }
     }
   }

@@ -67,7 +67,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
   final ScrollController _channelScrollController = ScrollController();
 
   // 网页全屏状态
-  bool _isWebFullscreen = false;
+  final bool _isWebFullscreen = false;
 
   // 加载状态
   bool _isLoading = true;
@@ -146,7 +146,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
         });
       }
     } catch (e) {
-      print('加载直播源列表失败: $e');
+      debugPrint('加载直播源列表失败: $e');
       if (mounted) {
         setState(() {
           _allSources = [];
@@ -171,7 +171,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
         }
       }
     } catch (e) {
-      print('加载频道列表失败: $e');
+      debugPrint('加载频道列表失败: $e');
       if (mounted) {
         setState(() {
           _allChannels = [];
@@ -245,7 +245,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
         _scrollToCurrentProgram();
       }
     } catch (e) {
-      print('加载 EPG 失败: $e');
+      debugPrint('加载 EPG 失败: $e');
       if (mounted) {
         setState(() {
           _programs = null;
@@ -1345,7 +1345,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
           child: ListTile(
             key: itemKey,
             selected: isSelected,
-            selectedTileColor: const Color(0xFF27ae60).withOpacity(0.1),
+            selectedTileColor: const Color(0xFF27ae60).withValues(alpha: 0.1),
             visualDensity: const VisualDensity(vertical: -1),
             leading: channel.logo.isNotEmpty
               ? AspectRatio(
@@ -2159,9 +2159,9 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
     if (isLive) {
       // 正在播放 - 绿色背景 + 绿色边框
       backgroundColor = themeService.isDarkMode
-          ? const Color(0xFF27ae60).withOpacity(0.2)
-          : const Color(0xFF27ae60).withOpacity(0.1);
-      borderColor = const Color(0xFF27ae60).withOpacity(0.3);
+          ? const Color(0xFF27ae60).withValues(alpha: 0.2)
+          : const Color(0xFF27ae60).withValues(alpha: 0.1);
+      borderColor = const Color(0xFF27ae60).withValues(alpha: 0.3);
       textColor = themeService.isDarkMode
           ? const Color(0xFF4ade80)
           : const Color(0xFF16a34a);
@@ -2171,8 +2171,8 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
     } else if (isPast) {
       // 过去的节目 - 灰色背景 + 灰色边框
       backgroundColor = themeService.isDarkMode
-          ? const Color(0xFF374151).withOpacity(0.5)
-          : const Color(0xFFd1d5db).withOpacity(0.5);
+          ? const Color(0xFF374151).withValues(alpha: 0.5)
+          : const Color(0xFFd1d5db).withValues(alpha: 0.5);
       borderColor = themeService.isDarkMode
           ? const Color(0xFF4b5563)
           : const Color(0xFFd1d5db);
@@ -2185,9 +2185,9 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
     } else {
       // 未开始的节目 - 蓝色背景 + 蓝色边框
       backgroundColor = themeService.isDarkMode
-          ? const Color(0xFF3498db).withOpacity(0.2)
-          : const Color(0xFF3498db).withOpacity(0.1);
-      borderColor = const Color(0xFF3498db).withOpacity(0.3);
+          ? const Color(0xFF3498db).withValues(alpha: 0.2)
+          : const Color(0xFF3498db).withValues(alpha: 0.1);
+      borderColor = const Color(0xFF3498db).withValues(alpha: 0.3);
       textColor = themeService.isDarkMode
           ? const Color(0xFF60a5fa)
           : const Color(0xFF2563eb);
@@ -2228,11 +2228,11 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
               if (isLive)
                 Row(
                   children: [
-                    Container(
+                    const Container(
                       width: 4,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF27ae60),
+                        color: Color(0xFF27ae60),
                         shape: BoxShape.circle,
                       ),
                     ),
