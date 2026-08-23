@@ -116,6 +116,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _seekOverlayTimer?.cancel();
     _fadeController.dispose();
     _progressFocusNode.dispose();
     _rootFocusNode.dispose();
@@ -147,7 +148,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
   // ---- 控制栏显隐 ----
 
   void _showControls() {
-    _fadeController.reverse(from: 0.0);
+    _fadeController.forward();
     setState(() => _controlsVisible = true);
   }
 
@@ -159,7 +160,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
   }
 
   void _hideControls() {
-    _fadeController.forward();
+    _fadeController.reverse();
     setState(() => _controlsVisible = false);
   }
 
@@ -409,9 +410,11 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
 
   @override
   Widget build(BuildContext context) {
-    // 更新时长
-    if (_totalTime != _formatDuration(widget.duration)) {
-      _updateTimeText();
+    // 更新时长（build 期间不能调 setState，直接赋值字段）
+    final formattedDuration = _formatDuration(widget.duration);
+    if (_totalTime != formattedDuration) {
+      _currentTime = _formatDuration(widget.position);
+      _totalTime = formattedDuration;
     }
 
     return LayoutBuilder(

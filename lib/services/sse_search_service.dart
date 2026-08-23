@@ -177,13 +177,6 @@ class SSESearchService {
 
     _isConnected = true;
 
-    // 设置15秒超时定时器
-    _timeoutTimer = Timer(const Duration(seconds: 15), () {
-      if (_isConnected) {
-        _handleTimeout();
-      }
-    });
-
     // 检查是否启用本地搜索或本地模式
     final isLocalMode = await UserDataService.getIsLocalMode();
     if (isLocalMode) {
@@ -226,6 +219,13 @@ class SSESearchService {
         'Accept': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Cookie': cookies,
+      });
+
+      // 设置15秒超时定时器（仅远程 SSE 路径，本地搜索不适用）
+      _timeoutTimer = Timer(const Duration(seconds: 15), () {
+        if (_isConnected) {
+          _handleTimeout();
+        }
       });
 
       _subscription = _client!.send(request).asStream().listen(
@@ -274,33 +274,38 @@ class SSESearchService {
     const utf8Decoder = Utf8Decoder(allowMalformed: false);
 
     // 流式处理 SSE 数据
-    await for (final chunk in response.stream.transform(utf8Decoder)) {
-      try {
-        // 将新数据添加到缓冲区
-        _buffer += chunk;
+    try {
+      await for (final chunk in response.stream.transform(utf8Decoder)) {
+        try {
+          // 将新数据添加到缓冲区
+          _buffer += chunk;
 
-        // 按行分割并处理
-        final lines = _buffer.split('\n');
+          // 按行分割并处理
+          final lines = _buffer.split('\n');
 
-        // 保留最后一行（可能不完整）
-        if (lines.isNotEmpty) {
-          _buffer = lines.last;
-          lines.removeLast();
-        }
-
-        for (final line in lines) {
-          if (line.trim().isEmpty) continue;
-
-          // SSE 格式: data: {...}
-          if (line.startsWith('data: ')) {
-            final jsonStr = line.substring(6); // 移除 'data: ' 前缀
-            _handleSSEData(jsonStr);
+          // 保留最后一行（可能不完整）
+          if (lines.isNotEmpty) {
+            _buffer = lines.last;
+            lines.removeLast();
           }
+
+          for (final line in lines) {
+            if (line.trim().isEmpty) continue;
+
+            // SSE 格式: data: {...}
+            if (line.startsWith('data: ')) {
+              final jsonStr = line.substring(6); // 移除 'data: ' 前缀
+              _handleSSEData(jsonStr);
+            }
+          }
+        } catch (e) {
+          // 如果解码失败，尝试跳过这个块
+          continue;
         }
-      } catch (e) {
-        // 如果解码失败，尝试跳过这个块
-        continue;
       }
+    } catch (e) {
+      // 流中途断开（搜索完成时 _closeConnection 主动关 client 也会触发），由 _handleError 静默处理
+      _handleError(e);
     }
   }
 

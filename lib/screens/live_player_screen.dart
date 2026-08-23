@@ -38,6 +38,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
   late LiveSource _currentSource;
   List<EpgProgram>? _programs;
   bool _isLoadingEpg = false;
+  int _epgLoadGeneration = 0; // 防止快速切台时旧 EPG 覆盖新频道
   List<LiveChannel> _allChannels = [];
   List<LiveSource> _allSources = [];
   String _selectedGroup = '全部';
@@ -212,6 +213,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
 
   Future<void> _loadEpgData() async {
     if (!mounted) return;
+    final generation = ++_epgLoadGeneration;
 
     setState(() {
       _isLoadingEpg = true;
@@ -220,7 +222,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
     try {
       // 如果 tvgId 为空，则不加载 EPG
       if (_currentChannel.tvgId.isEmpty) {
-        if (mounted) {
+        if (mounted && generation == _epgLoadGeneration) {
           setState(() {
             _programs = null;
             _isLoadingEpg = false;
@@ -235,7 +237,8 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
         _currentSource.key,
       );
 
-      if (mounted) {
+      // 快速切台时丢弃过期的响应
+      if (mounted && generation == _epgLoadGeneration) {
         setState(() {
           _programs = epgData?.programs;
           _isLoadingEpg = false;
@@ -246,7 +249,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
       }
     } catch (e) {
       debugPrint('加载 EPG 失败: $e');
-      if (mounted) {
+      if (mounted && generation == _epgLoadGeneration) {
         setState(() {
           _programs = null;
           _isLoadingEpg = false;

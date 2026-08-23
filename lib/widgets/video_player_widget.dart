@@ -154,8 +154,10 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       setState(() {
         _isLoadingVideo = false;
       });
-      _readyFired = true;
-      widget.onReady?.call();
+      if (!_readyFired) {
+        _readyFired = true;
+        widget.onReady?.call();
+      }
     } catch (error) {
       debugPrint('VideoPlayerWidget: failed to open media $error');
       if (mounted) {

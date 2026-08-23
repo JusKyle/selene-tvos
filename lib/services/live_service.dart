@@ -373,7 +373,8 @@ class LiveService {
       final request = http.Request('GET', Uri.parse(epgUrl));
       request.headers['User-Agent'] = userAgent;
 
-      final response = await request.send();
+      final response =
+          await request.send().timeout(const Duration(seconds: 30));
       if (response.statusCode != 200) {
         return {};
       }

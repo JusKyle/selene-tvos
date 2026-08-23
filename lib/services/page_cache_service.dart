@@ -366,12 +366,13 @@ class PageCacheService
       await LocalModeStorageService.saveFavorite(FavoriteItem(
           id: id,
           source: source,
-          title: favoriteData['title'],
-          sourceName: favoriteData['source_name'],
-          year: favoriteData['year'],
-          cover: favoriteData['cover'],
-          totalEpisodes: favoriteData['total_episodes'],
-          saveTime: favoriteData['save_time'],
+          title: favoriteData['title'] ?? '',
+          sourceName: favoriteData['source_name'] ?? '',
+          year: favoriteData['year'] ?? '',
+          cover: favoriteData['cover'] ?? '',
+          totalEpisodes: favoriteData['total_episodes'] ?? 0,
+          saveTime:
+              favoriteData['save_time'] ?? DateTime.now().millisecondsSinceEpoch,
           origin: ''));
       return DataOperationResult.success(null);
     }

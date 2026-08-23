@@ -242,9 +242,10 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   void startPlay(int targetIndex, int playTime) {
-    if (targetIndex >= currentDetail!.episodes.length) {
+    if (currentDetail!.episodes.isEmpty) return;
+    if (targetIndex < 0 || targetIndex >= currentDetail!.episodes.length) {
+      // 越界时回退到第 0 集继续播放，避免卡在加载界面
       targetIndex = 0;
-      return;
     }
     if (mounted) {
       setState(() {

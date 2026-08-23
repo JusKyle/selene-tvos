@@ -20,6 +20,12 @@ class SearchPageResult {
 
 /// 下游搜索服务
 class DownstreamService {
+  /// 兼容服务端返回 int/字符串/浮点的分页数
+  static int _parsePageCount(dynamic raw) {
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw?.toString() ?? '') ?? 1;
+  }
+
   /// 从指定的搜索资源API搜索
   static Future<List<SearchResult>> searchFromApi(
     SearchResource resource,
@@ -266,7 +272,7 @@ class DownstreamService {
           .map((result) => SearchResult.fromJson(result))
           .toList();
 
-      final pageCount = page == 1 ? (data['pagecount'] as int? ?? 1) : 1;
+      final pageCount = page == 1 ? _parsePageCount(data['pagecount']) : 1;
 
       // 缓存成功的搜索结果
       cache.setCachedSearchPage(

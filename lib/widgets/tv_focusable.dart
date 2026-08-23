@@ -74,8 +74,11 @@ class _TVFocusableWidgetState extends State<TVFocusableWidget> {
           }
           if (event.logicalKey == LogicalKeyboardKey.goBack ||
               event.logicalKey == LogicalKeyboardKey.escape) {
-            widget.onMenu?.call();
-            return KeyEventResult.handled;
+            if (widget.onMenu != null) {
+              widget.onMenu!.call();
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
           }
         }
         return KeyEventResult.ignored;

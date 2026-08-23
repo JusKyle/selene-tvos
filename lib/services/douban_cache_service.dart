@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -76,6 +77,9 @@ class DoubanCacheService {
 
   /// 缓存文件目录
   Directory? _cacheDir;
+
+  /// 定期清理定时器订阅，避免重复订阅泄漏
+  StreamSubscription<void>? _cleanupSubscription;
 
   /// 初始化缓存服务
   Future<void> init() async {
@@ -304,10 +308,18 @@ class DoubanCacheService {
 
   /// 定期清理过期缓存（建议在应用启动时调用）
   void startPeriodicCleanup() {
+    // 防止重复订阅
+    _cleanupSubscription?.cancel();
     // 每小时清理一次过期缓存
-    Stream.periodic(const Duration(hours: 1)).listen((_) {
+    _cleanupSubscription = Stream.periodic(const Duration(hours: 1)).listen((_) {
       _cleanExpiredCache();
     });
+  }
+
+  /// 取消定期清理定时器
+  void dispose() {
+    _cleanupSubscription?.cancel();
+    _cleanupSubscription = null;
   }
 
   /// 豆瓣服务专用缓存方法

@@ -218,6 +218,10 @@ class _AnimeScreenState extends State<AnimeScreen> {
   bool _hasMore = true;
   String? _errorMessage;
 
+  String _getCurrentFilterState() {
+    return '$_selectedCategoryValue|$_selectedAnimeType|$_selectedAnimeRegion|$_selectedAnimeYear|$_selectedAnimePlatform|$_selectedAnimeSort|$_selectedMovieType|$_selectedMovieRegion|$_selectedMovieYear|$_selectedMovieSort';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -264,6 +268,8 @@ class _AnimeScreenState extends State<AnimeScreen> {
     if (!mounted) return;
     if (_isLoading || _isLoadingMore || !_hasMore) return;
     if (_selectedCategoryValue == '每日放送') return; // Bangumi 数据不支持分页
+
+    final requestFilterState = _getCurrentFilterState();
 
     setState(() {
       _isLoadingMore = true;
@@ -353,6 +359,11 @@ class _AnimeScreenState extends State<AnimeScreen> {
       params,
     );
     if (mounted) {
+      if (requestFilterState != _getCurrentFilterState()) {
+        // 筛选状态已改变，忽略这个过期的响应
+        _isLoadingMore = false;
+        return;
+      }
       setState(() {
         if (result.success && result.data != null) {
           _animeList.addAll(result.data!);

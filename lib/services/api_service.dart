@@ -159,7 +159,18 @@ class ApiService {
 
     // 处理成功响应
     try {
-      final responseData = json.decode(response.body);
+      final responseBody = response.body.trim();
+
+      // 空 body（void 写操作等），直接返回成功
+      if (responseBody.isEmpty) {
+        return ApiResponse<T>(
+          success: true,
+          data: null,
+          statusCode: response.statusCode,
+        );
+      }
+
+      final responseData = json.decode(responseBody);
 
       if (fromJson != null) {
         final data = fromJson(responseData);

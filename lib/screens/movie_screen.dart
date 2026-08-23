@@ -254,6 +254,7 @@ class _MovieScreenState extends State<MovieScreen> {
         // 检查当前筛选状态是否仍然与发起请求时一致
         if (requestFilterState != _getCurrentFilterState()) {
           // 筛选状态已改变，忽略这个过期的响应
+          _isLoading = false;
           return;
         }
 
@@ -293,6 +294,7 @@ class _MovieScreenState extends State<MovieScreen> {
         // 检查当前筛选状态是否仍然与发起请求时一致
         if (requestFilterState != _getCurrentFilterState()) {
           // 筛选状态已改变，忽略这个过期的响应
+          _isLoading = false;
           return;
         }
 
@@ -373,6 +375,7 @@ class _MovieScreenState extends State<MovieScreen> {
         // 检查当前筛选状态是否仍然与发起请求时一致
         if (requestFilterState != _getCurrentFilterState()) {
           // 筛选状态已改变，忽略这个过期的响应
+          _isLoadingMore = false;
           return;
         }
 
@@ -404,6 +407,7 @@ class _MovieScreenState extends State<MovieScreen> {
         // 检查当前筛选状态是否仍然与发起请求时一致
         if (requestFilterState != _getCurrentFilterState()) {
           // 筛选状态已改变，忽略这个过期的响应
+          _isLoadingMore = false;
           return;
         }
 
