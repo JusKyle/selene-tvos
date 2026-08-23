@@ -6,8 +6,10 @@ import '../widgets/video_card.dart';
 import '../services/page_cache_service.dart';
 import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
+import '../core/platform_detector.dart';
 import 'video_menu_bottom_sheet.dart';
 import 'shimmer_effect.dart';
+import 'tv_focus_grid.dart';
 
 class HistoryGrid extends StatefulWidget {
   final Function(PlayRecord) onVideoTap;
@@ -338,7 +340,7 @@ class _HistoryGridState extends State<HistoryGrid>
           final double itemWidth = math.max(calculatedItemWidth, minItemWidth);
           final double itemHeight = itemWidth * 2.0;
 
-          return GridView.builder(
+          final gridView = GridView.builder(
             padding: const EdgeInsets.all(16),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -365,6 +367,12 @@ class _HistoryGridState extends State<HistoryGrid>
               );
             },
           );
+
+          // tvOS 平台包裹 TVFocusGrid 确保焦点导航顺序
+          if (PlatformDetector.isTVOS) {
+            return TVFocusGrid(child: gridView);
+          }
+          return gridView;
         },
       ),
     );

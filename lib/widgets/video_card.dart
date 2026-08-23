@@ -11,6 +11,8 @@ import '../utils/image_url.dart';
 import '../models/search_result.dart';
 import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
+import '../core/platform_detector.dart';
+import 'tv_focusable.dart';
 
 /// 视频卡片组件
 class VideoCard extends StatefulWidget {
@@ -46,6 +48,7 @@ class _VideoCardState extends State<VideoCard> {
   bool _isFavoriteButtonHovered = false;
   bool _isLinkButtonHovered = false;
   bool _isSourceCountBadgeHovered = false;
+  bool _isFocused = false;
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +144,7 @@ class _VideoCardState extends State<VideoCard> {
                       // Hover 渐变蒙层（PC平台）
                       if (isPC)
                         AnimatedOpacity(
-                          opacity: _isHovered ? 1.0 : 0.0,
+                          opacity: _isHighlighted ? 1.0 : 0.0,
                           duration: const Duration(milliseconds: 200),
                           child: Container(
                             width: width,
@@ -168,7 +171,7 @@ class _VideoCardState extends State<VideoCard> {
                           top: 4,
                           left: 4,
                           child: AnimatedScale(
-                            scale: isPC && _isHovered ? 1.05 : 1.0,
+                            scale: (isPC && _isHovered) || _isFocused ? 1.05 : 1.0,
                             duration: const Duration(milliseconds: 200),
                             curve: Curves.easeInOut,
                             child: Container(
@@ -198,7 +201,7 @@ class _VideoCardState extends State<VideoCard> {
                           top: 4,
                           right: 4,
                           child: AnimatedScale(
-                            scale: isPC && _isHovered ? 1.1 : 1.0,
+                            scale: ((isPC && _isHovered) || _isFocused) ? 1.1 : 1.0,
                             duration: const Duration(milliseconds: 200),
                             curve: Curves.easeInOut,
                             child: Container(
@@ -226,7 +229,7 @@ class _VideoCardState extends State<VideoCard> {
                           top: 4,
                           right: 4,
                           child: AnimatedScale(
-                            scale: isPC && _isHovered ? 1.1 : 1.0,
+                            scale: ((isPC && _isHovered) || _isFocused) ? 1.1 : 1.0,
                             duration: const Duration(milliseconds: 200),
                             curve: Curves.easeInOut,
                             child: Container(
@@ -284,7 +287,7 @@ class _VideoCardState extends State<VideoCard> {
                             onTap: widget.onTap,
                             child: Center(
                               child: AnimatedOpacity(
-                                opacity: _isHovered ? 1.0 : 0.0,
+                                opacity: _isHighlighted ? 1.0 : 0.0,
                                 duration: const Duration(milliseconds: 200),
                                 child: MouseRegion(
                                   onEnter: (_) => setState(
@@ -332,7 +335,7 @@ class _VideoCardState extends State<VideoCard> {
                             top: 4,
                             left: 4,
                             child: AnimatedOpacity(
-                              opacity: _isHovered ? 1.0 : 0.0,
+                              opacity: _isHighlighted ? 1.0 : 0.0,
                               duration: const Duration(milliseconds: 200),
                               child: MouseRegion(
                                 onEnter: (_) =>
@@ -370,7 +373,7 @@ class _VideoCardState extends State<VideoCard> {
                             bottom: 10,
                             right: 10,
                             child: AnimatedOpacity(
-                              opacity: _isHovered ? 1.0 : 0.0,
+                              opacity: _isHighlighted ? 1.0 : 0.0,
                               duration: const Duration(milliseconds: 200),
                               child: MouseRegion(
                                 onEnter: (_) => setState(
@@ -414,7 +417,7 @@ class _VideoCardState extends State<VideoCard> {
                             bottom: 10,
                             right: 10,
                             child: AnimatedOpacity(
-                              opacity: _isHovered ? 1.0 : 0.0,
+                              opacity: _isHighlighted ? 1.0 : 0.0,
                               duration: const Duration(milliseconds: 200),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -482,7 +485,7 @@ class _VideoCardState extends State<VideoCard> {
                             bottom: 10,
                             right: 10,
                             child: AnimatedOpacity(
-                              opacity: _isHovered ? 1.0 : 0.0,
+                              opacity: _isHighlighted ? 1.0 : 0.0,
                               duration: const Duration(milliseconds: 200),
                               child: MouseRegion(
                                 onEnter: (_) => setState(
@@ -525,9 +528,9 @@ class _VideoCardState extends State<VideoCard> {
                         Text(
                           widget.videoInfo.title,
                           style: FontUtils.poppins(
-                            fontSize: width < 100 ? 12 : 13, // 根据宽度调整字体大小，调大字体
+                            fontSize: (width < 100 ? 12 : 13) + (_isFocused ? 2 : 0),
                             fontWeight: FontWeight.w500,
-                            color: isPC && _isHovered
+                            color: isPC && _isHovered || _isFocused
                                 ? Colors.green
                                 : (themeService.isDarkMode
                                     ? const Color(0xFFffffff)
@@ -552,7 +555,7 @@ class _VideoCardState extends State<VideoCard> {
                             ),
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: isPC && _isHovered
+                                color: isPC && _isHovered || _isFocused
                                     ? Colors.green
                                     : const Color(0xFF7f8c8d),
                                 width: 0.8,
@@ -567,11 +570,11 @@ class _VideoCardState extends State<VideoCard> {
                               style: FontUtils.poppins(
                                 fontSize:
                                     width < 100 ? 11 : 12, // 根据宽度调整字体大小，调大字体
-                                color: isPC && _isHovered
+                                color: isPC && _isHovered || _isFocused
                                     ? Colors.green
                                     : (widget.from == 'agg'
-                                        ? const Color(0xFF9b59b6) // 聚合模式用紫色文字
-                                        : const Color(0xFF7f8c8d)), // 其他模式用灰色文字
+                                        ? const Color(0xFF9b59b6)
+                                        : const Color(0xFF7f8c8d)),
                                 height: 1.0, // 进一步减少行高
                               ),
                               textAlign: TextAlign.center,
@@ -598,6 +601,36 @@ class _VideoCardState extends State<VideoCard> {
                   child: AnimatedScale(
                     scale: _isHovered ? 1.05 : 1.0,
                     duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    child: cardContent,
+                  ),
+                ),
+              );
+            }
+
+            // tvOS 平台：使用 TVFocusableWidget 包裹
+            if (PlatformDetector.isTVOS) {
+              return TVFocusableWidget(
+                onTap: widget.onTap,
+                onMenu: () {
+                  if (widget.from == 'playrecord' ||
+                      widget.from == 'douban' ||
+                      widget.from == 'bangumi' ||
+                      widget.from == 'favorite' ||
+                      widget.from == 'search' ||
+                      widget.from == 'agg') {
+                    _showGlobalMenu(context);
+                  }
+                },
+                child: Focus(
+                  onFocusChange: (focused) {
+                    setState(() {
+                      _isFocused = focused;
+                    });
+                  },
+                  child: AnimatedScale(
+                    scale: _isFocused ? 1.05 : 1.0,
+                    duration: const Duration(milliseconds: 150),
                     curve: Curves.easeInOut,
                     child: cardContent,
                   ),
@@ -667,17 +700,20 @@ class _VideoCardState extends State<VideoCard> {
 
     switch (widget.from) {
       case 'favorite':
-        return true; // 收藏夹中显示总集数
+        return true;
       case 'playrecord':
-        return true; // 播放记录中显示当前/总集数
+        return true;
       case 'search':
-        return true; // 搜索模式中显示总集数
+        return true;
       case 'agg':
-        return true; // 聚合模式中显示总集数
+        return true;
       default:
-        return true; // 默认显示当前/总集数
+        return true;
     }
   }
+
+  /// 是否处于视觉高亮状态（hover 或 tvOS focus）
+  bool get _isHighlighted => _isHovered || _isFocused;
 
   /// 获取集数显示文本
   String _getEpisodeText() {

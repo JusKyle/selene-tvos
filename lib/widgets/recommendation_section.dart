@@ -5,9 +5,11 @@ import '../models/video_info.dart';
 import '../services/theme_service.dart';
 import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
+import '../core/platform_detector.dart';
 import 'video_card.dart';
 import 'video_menu_bottom_sheet.dart';
 import 'shimmer_effect.dart';
+import 'tv_focus_grid.dart';
 
 /// 推荐信息模块组件
 class RecommendationSection extends StatefulWidget {
@@ -230,8 +232,12 @@ class _RecommendationSectionState extends State<RecommendationSection> {
             _buildLoadingState()
           else if (widget.hasError)
             _buildErrorState()
+          else if (isPC)
+            _buildContentWithScrollButtons()
+          else if (PlatformDetector.isTVOS)
+            _buildContentTVOS()
           else
-            isPC ? _buildContentWithScrollButtons() : _buildContent(),
+            _buildContent(),
         ],
       ),
     );
@@ -405,6 +411,59 @@ class _RecommendationSectionState extends State<RecommendationSection> {
                 ),
               );
             },
+          ),
+        );
+      },
+    );
+  }
+
+  /// 构建 tvOS 内容区域（用 TVFocusGrid 包裹）
+  Widget _buildContentTVOS() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double visibleCards = DeviceUtils.getHorizontalVisibleCards(context, widget.cardCount);
+        final double screenWidth = constraints.maxWidth;
+        const double padding = 32.0;
+        const double spacing = 12.0;
+        final double availableWidth = screenWidth - padding;
+        const double minCardWidth = 120.0;
+        final double calculatedCardWidth =
+            (availableWidth - (spacing * (visibleCards - 1))) / visibleCards;
+        final double cardWidth = math.max(calculatedCardWidth, minCardWidth);
+
+        return TVFocusGrid(
+          child: SizedBox(
+            height: (cardWidth * 1.5) + 60,
+            child: ListView.builder(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              clipBehavior: Clip.none,
+              itemCount: widget.videoInfos?.length ?? 0,
+              itemBuilder: (context, index) {
+                final videoInfo = widget.videoInfos![index];
+                return Container(
+                  margin: EdgeInsets.only(
+                    right: index < widget.videoInfos!.length - 1 ? spacing : 0,
+                  ),
+                  child: VideoCard(
+                    videoInfo: videoInfo,
+                    onTap: () => widget.onItemTap?.call(videoInfo),
+                    from: videoInfo.source == 'douban'
+                        ? 'douban'
+                        : (videoInfo.source == 'bangumi'
+                            ? 'bangumi'
+                            : 'playrecord'),
+                    cardWidth: cardWidth,
+                    onGlobalMenuAction: widget.onGlobalMenuAction != null
+                        ? (action) =>
+                            widget.onGlobalMenuAction!(videoInfo, action)
+                        : null,
+                    isFavorited: false,
+                  ),
+                );
+              },
+            ),
           ),
         );
       },

@@ -11,6 +11,8 @@ import 'user_menu.dart';
 import 'dart:async';
 import 'windows_title_bar.dart';
 import '../core/platform_detector.dart';
+import 'tv_focusable.dart';
+import 'tv_focus_grid.dart';
 
 class MainLayout extends StatefulWidget {
   final Widget content;
@@ -282,75 +284,102 @@ class _MainLayoutState extends State<MainLayout> {
               : themeService.lightTheme,
           child: Scaffold(
             resizeToAvoidBottomInset: !widget.isSearchMode,
-            body: Stack(
-              children: [
-                // 主要内容区域
-                Column(
-                  children: [
-                    // 主内容区域（包含header和content）
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: themeService.isDarkMode
-                              ? const Color(0xFF000000) // 深色模式纯黑色
-                              : null,
-                          gradient: themeService.isDarkMode
-                              ? null
-                              : const LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Color(0xFFe6f3fb), // 浅色模式渐变
-                                    Color(0xFFeaf3f7),
-                                    Color(0xFFf7f7f3),
-                                    Color(0xFFe9ecef),
-                                    Color(0xFFdbe3ea),
-                                    Color(0xFFd3dde6),
-                                  ],
-                                  stops: [0.0, 0.18, 0.38, 0.60, 0.80, 1.0],
-                                ),
-                        ),
-                        child: Column(
-                          children: [
-                            // Windows 自定义标题栏
-                            if (PlatformDetector.isWindows)
-                              WindowsTitleBar(
-                                customBackgroundColor: widget.isSearchMode
-                                    ? (themeService.isDarkMode
-                                        ? const Color(0xFF121212)
-                                        : const Color(0xFFf5f5f5))
-                                    : null,
-                              ),
-                            // 固定 Header
-                            _buildHeader(context, themeService),
-                            // 主要内容区域
-                            Expanded(
-                              child: widget.content,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // 底部导航栏（可选）
-                    if (widget.showBottomNav) _buildBottomNavBar(themeService),
-                  ],
-                ),
-                // 用户菜单覆盖层 - 现在会覆盖整个屏幕包括navbar
-                if (_showUserMenu)
-                  UserMenu(
-                    isDarkMode: themeService.isDarkMode,
-                    onClose: () {
-                      setState(() {
-                        _showUserMenu = false;
-                      });
-                    },
-                  ),
-              ],
-            ),
+body: _buildBody(context, themeService),
           ),
         );
       },
     );
+  }
+
+  /// 构建主 body 内容，tvOS 平台包裹 Focus 全局按键处理
+  Widget _buildBody(BuildContext context, ThemeService themeService) {
+    final scaffoldBody = Stack(
+      children: [
+        Column(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: themeService.isDarkMode
+                      ? const Color(0xFF000000)
+                      : null,
+                  gradient: themeService.isDarkMode
+                      ? null
+                      : const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0xFFe6f3fb),
+                            Color(0xFFeaf3f7),
+                            Color(0xFFf7f7f3),
+                            Color(0xFFe9ecef),
+                            Color(0xFFdbe3ea),
+                            Color(0xFFd3dde6),
+                          ],
+                          stops: [0.0, 0.18, 0.38, 0.60, 0.80, 1.0],
+                        ),
+                ),
+                child: Column(
+                  children: [
+                    if (PlatformDetector.isWindows)
+                      WindowsTitleBar(
+                        customBackgroundColor: widget.isSearchMode
+                            ? (themeService.isDarkMode
+                                ? const Color(0xFF121212)
+                                : const Color(0xFFf5f5f5))
+                            : null,
+                      ),
+                    _buildHeader(context, themeService),
+                    Expanded(
+                      child: widget.content,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (widget.showBottomNav) _buildBottomNavBar(themeService),
+          ],
+        ),
+        if (_showUserMenu)
+          UserMenu(
+            isDarkMode: themeService.isDarkMode,
+            onClose: () {
+              setState(() {
+                _showUserMenu = false;
+              });
+            },
+          ),
+      ],
+    );
+
+    // tvOS 平台包裹全局 Focus 按键处理
+    if (PlatformDetector.isTVOS) {
+      return Focus(
+        autofocus: true,
+        onKey: _handleGlobalKey,
+        child: scaffoldBody,
+      );
+    }
+
+    return scaffoldBody;
+  }
+
+  /// tvOS 全局按键处理（Select 选中、Menu 返回）
+  KeyEventResult _handleGlobalKey(FocusNode node, KeyEvent event) {
+    if (event is RawKeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.select) {
+        // Select 键触发确认操作，交由各 Focus 节点处理
+        return KeyEventResult.ignored;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.goBack) {
+        // Menu/Back 键尝试返回上一页
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+          return KeyEventResult.handled;
+        }
+      }
+    }
+    return KeyEventResult.ignored;
   }
 
   Widget _buildHeader(BuildContext context, ThemeService themeService) {
@@ -893,8 +922,9 @@ class _MainLayoutState extends State<MainLayout> {
     ];
 
     final isTablet = DeviceUtils.isTablet(context);
+    final isTVOS = PlatformDetector.isTVOS;
 
-    return Container(
+    final navBar = Container(
       decoration: BoxDecoration(
         color: themeService.isDarkMode
             ? const Color(0xFF1e1e1e).withOpacity(0.9)
@@ -912,16 +942,14 @@ class _MainLayoutState extends State<MainLayout> {
         left: 0,
         right: 0,
         top: 8,
-        bottom: MediaQuery.of(context).padding.bottom + 8, // 手动处理底部安全区域
+        bottom: MediaQuery.of(context).padding.bottom + 8,
       ),
       child: Row(
         mainAxisAlignment:
             isTablet ? MainAxisAlignment.center : MainAxisAlignment.spaceEvenly,
         children: [
-          // 平板模式下添加左侧空白
           if (isTablet) const Spacer(flex: 3),
 
-          // 导航按钮
           ...navItems.asMap().entries.expand((entry) {
             int index = entry.key;
             Map<String, dynamic> item = entry.value;
@@ -929,79 +957,113 @@ class _MainLayoutState extends State<MainLayout> {
                 !widget.isSearchMode && widget.currentBottomNavIndex == index;
             bool isHovered = DeviceUtils.isPC() && _hoveredNavIndex == index;
 
-            return [
-              MouseRegion(
-                cursor: DeviceUtils.isPC()
-                    ? SystemMouseCursors.click
-                    : MouseCursor.defer,
-                onEnter: DeviceUtils.isPC()
-                    ? (_) {
-                        setState(() {
-                          _hoveredNavIndex = index;
-                        });
-                      }
-                    : null,
-                onExit: DeviceUtils.isPC()
-                    ? (_) {
-                        setState(() {
-                          _hoveredNavIndex = null;
-                        });
-                      }
-                    : null,
-                child: GestureDetector(
-                  onTap: () {
-                    widget.onBottomNavChanged(index);
-                  },
-                  behavior: HitTestBehavior.opaque, // 确保整个区域都可以点击
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 16 : 12,
-                      vertical: 8,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          item['icon'],
-                          color: isSelected
-                              ? const Color(0xFF27ae60)
-                              : isHovered
-                                  ? const Color(0xFF52c77a) // hover 时的浅绿色
-                                  : themeService.isDarkMode
-                                      ? const Color(0xFFb0b0b0)
-                                      : const Color(0xFF7f8c8d),
-                          size: 24,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          item['label'],
-                          style: FontUtils.poppins(
-                            fontSize: 12,
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.w400,
-                            color: isSelected
-                                ? const Color(0xFF27ae60)
-                                : isHovered
-                                    ? const Color(0xFF52c77a) // hover 时的浅绿色
-                                    : themeService.isDarkMode
-                                        ? const Color(0xFFb0b0b0)
-                                        : const Color(0xFF7f8c8d),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              // 平板模式下在按钮之间添加间距
-              if (isTablet && index < navItems.length - 1)
-                const SizedBox(width: 36),
-            ];
+            final navButton = _buildNavButton(
+              index: index,
+              item: item,
+              isSelected: isSelected,
+              isHovered: isHovered,
+              isTablet: isTablet,
+              themeService: themeService,
+            );
+
+            final wrappedNavButton = isTVOS
+                ? TVFocusableWidget(
+                    key: ValueKey('nav_tab_$index'),
+                    onTap: () => widget.onBottomNavChanged(index),
+                    child: navButton,
+                  )
+                : navButton;
+
+            final List<Widget> children = [wrappedNavButton];
+            if (isTablet && index < navItems.length - 1) {
+              children.add(const SizedBox(width: 36));
+            }
+            return children;
           }),
 
-          // 平板模式下添加右侧空白
           if (isTablet) const Spacer(flex: 3),
         ],
+      ),
+    );
+
+    // tvOS 平台包裹 FocusTraversalGroup 确保导航顺序
+    if (isTVOS) {
+      return FocusTraversalGroup(
+        order: TVGridFocusTraversal(),
+        child: navBar,
+      );
+    }
+
+    return navBar;
+  }
+
+  /// 构建单个导航按钮内容
+  Widget _buildNavButton({
+    required int index,
+    required Map<String, dynamic> item,
+    required bool isSelected,
+    required bool isHovered,
+    required bool isTablet,
+    required ThemeService themeService,
+  }) {
+    return MouseRegion(
+      cursor: DeviceUtils.isPC() ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: DeviceUtils.isPC()
+          ? (_) {
+              setState(() {
+                _hoveredNavIndex = index;
+              });
+            }
+          : null,
+      onExit: DeviceUtils.isPC()
+          ? (_) {
+              setState(() {
+                _hoveredNavIndex = null;
+              });
+            }
+          : null,
+      child: GestureDetector(
+        onTap: () {
+          widget.onBottomNavChanged(index);
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 16 : 12,
+            vertical: 8,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                item['icon'],
+                color: isSelected
+                    ? const Color(0xFF27ae60)
+                    : isHovered
+                        ? const Color(0xFF52c77a)
+                        : themeService.isDarkMode
+                            ? const Color(0xFFb0b0b0)
+                            : const Color(0xFF7f8c8d),
+                size: 24,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                item['label'],
+                style: FontUtils.poppins(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected
+                      ? const Color(0xFF27ae60)
+                      : isHovered
+                          ? const Color(0xFF52c77a)
+                          : themeService.isDarkMode
+                              ? const Color(0xFFb0b0b0)
+                              : const Color(0xFF7f8c8d),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
