@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:gal/gal.dart';
 import 'package:app_settings/app_settings.dart';
 import 'package:provider/provider.dart';
+import '../core/platform_detector.dart';
 import '../utils/image_url.dart';
 import '../utils/font_utils.dart';
 import '../services/theme_service.dart';
@@ -354,7 +355,10 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
               Center(
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).pop(), // 点击图片也关闭
-                  onLongPress: _showSaveImageMenu, // 长按显示保存菜单
+                  // tvOS 无相册概念，隐藏保存图片菜单
+                  onLongPress: PlatformDetector.isTVOS
+                      ? null
+                      : _showSaveImageMenu,
                   child: FutureBuilder<String>(
                     future: getImageUrl(widget.imageUrl, widget.source),
                     builder: (context, snapshot) {

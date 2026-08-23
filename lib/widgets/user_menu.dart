@@ -877,53 +877,56 @@ class _UserMenuState extends State<UserMenu> {
                         ),
                       ),
                     ),
-                    // 分割线
-                    Container(
-                      height: 1,
-                      color: widget.isDarkMode
-                          ? const Color(0xFF374151)
-                          : const Color(0xFFe5e7eb),
-                    ),
-                    // 检查更新按钮
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: _handleCheckUpdate,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                LucideIcons.download,
-                                size: 20,
-                                color: const Color(0xFF3b82f6),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                '检查更新',
-                                style: FontUtils.poppins(
-                                  fontSize: 16,
-                                  color: widget.isDarkMode
-                                      ? const Color(0xFFffffff)
-                                      : const Color(0xFF1f2937),
-                                  fontWeight: FontWeight.w500,
+                    // 检查更新（tvOS 通过 App Store 更新，无需此入口）
+                    if (!DeviceUtils.isTVOS()) ...[
+                      // 分割线
+                      Container(
+                        height: 1,
+                        color: widget.isDarkMode
+                            ? const Color(0xFF374151)
+                            : const Color(0xFFe5e7eb),
+                      ),
+                      // 检查更新按钮
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _handleCheckUpdate,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  LucideIcons.download,
+                                  size: 20,
+                                  color: const Color(0xFF3b82f6),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 12),
+                                Text(
+                                  '检查更新',
+                                  style: FontUtils.poppins(
+                                    fontSize: 16,
+                                    color: widget.isDarkMode
+                                        ? const Color(0xFFffffff)
+                                        : const Color(0xFF1f2937),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    // 分割线
-                    Container(
-                      height: 1,
-                      color: widget.isDarkMode
-                          ? const Color(0xFF374151)
-                          : const Color(0xFFe5e7eb),
-                    ),
+                      // 分割线
+                      Container(
+                        height: 1,
+                        color: widget.isDarkMode
+                            ? const Color(0xFF374151)
+                            : const Color(0xFFe5e7eb),
+                      ),
+                    ],
                     // 登出按钮
                     Material(
                       color: Colors.transparent,
@@ -962,20 +965,22 @@ class _UserMenuState extends State<UserMenu> {
                           ? const Color(0xFF374151)
                           : const Color(0xFFe5e7eb),
                     ),
-                    // 版本号
+                    // 版本号（tvOS 无浏览器，不提供跳转）
                     MouseRegion(
                       cursor: DeviceUtils.isPC()
                           ? SystemMouseCursors.click
                           : MouseCursor.defer,
                       child: GestureDetector(
-                        onTap: () async {
-                          final url = Uri.parse(
-                              'https://github.com/MoonTechLab/Selene');
-                          if (await canLaunchUrl(url)) {
-                            await launchUrl(url,
-                                mode: LaunchMode.externalApplication);
-                          }
-                        },
+                        onTap: DeviceUtils.isTVOS()
+                            ? null
+                            : () async {
+                                final url = Uri.parse(
+                                    'https://github.com/MoonTechLab/Selene');
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(url,
+                                      mode: LaunchMode.externalApplication);
+                                }
+                              },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,

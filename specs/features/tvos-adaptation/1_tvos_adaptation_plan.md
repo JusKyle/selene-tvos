@@ -207,3 +207,24 @@ lib/screens/login_screen.dart  # Focus 表单
 2. **Focus 遍历测试**：用方向键遍历所有屏幕，确保无死锁
 3. **播放测试**：测试 MP4/HLS 多种视频源播放
 4. **真机测试**：Apple TV 4K 真机性能测试
+
+## 实施进度
+
+### 已完成
+
+- **Phase 1** 基础架构：`PlatformDetector`（替换全部 `dart:io Platform.is*`）、`PlayerAdapter` 抽象、`video_player` 依赖、`tvos/` Xcode 项目脚手架
+- **Phase 2** 导航系统：`TVFocusableWidget`、`TVGridFocusTraversal`、`MainLayout` Focus 导航栏
+- **Phase 3** 播放器：`TVPlayerControls`（813 行）、`PlayerScreen` tvOS 布局、PiP 守卫
+- **Phase 4** 页面适配：HomeScreen（P4.1）、SearchScreen + `TVFullscreenPanel`（P4.2）、LiveScreen/LivePlayerScreen（P4.3）、LoginScreen + `tvTheme`（P4.4），全部已合并回 main
+
+### Phase 5 验证中发现的问题（待处理）
+
+1. **`video_player_adapter.dart` 未集成**：Phase 1 创建了适配器（99 行）但未被任何文件 import。tvOS 播放器当前仍通过 `VideoPlayerWidget` → media_kit `Player` → `TVPlayerControls` 渲染。需决定：media_kit 在 tvOS 上是否可用，否则切换为 video_player。
+2. **`bitsdojo_window` / `macos_window_utils` 顶层 import**：`main.dart` 顶层 import 无法用运行时守卫绕过，需验证这两个包在 tvOS 编译时是否有条件 stub。若失败需改为条件导出。
+3. **编译验证未执行**：本机未找到 flutter SDK，`flutter analyze` / `flutter build ios --platform=tvos` 尚未运行。
+
+### 验证记录
+
+- `Platform.is*` 残留扫描：0 处（全部替换为 `PlatformDetector`）✓
+- tvOS 分支完整性：player_screen（`_buildTVLayout`/`_buildTVPlayerLayer`）、login_screen（`_buildTVLayout`/`_LoginFocusTraversal`）、live 双屏、theme（`tvTheme`）均存在 ✓
+- `tvos/Runner/Info.plist`：ATS 已配置 `NSAllowsArbitraryLoads` ✓
