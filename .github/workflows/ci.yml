@@ -13,20 +13,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
+      # 官方 Flutter 不提供 tvOS 构建（无 --platform=tvos）。
+      # 使用社区 flutter-tvos fork（github.com/fluttertv/flutter-tvos），
+      # 它提供 flutter-tvos 命令：create/run/build 均以 tvOS 为目标。
+      # 首次运行 flutter-tvos 会自动 clone 并 pin 到 Flutter 3.47.1 SDK，
+      # 编译工具快照，随后 precache 下载 tvOS 引擎产物（耗时约 5-10 分钟）。
+      - name: Install flutter-tvos (v3.47.1-tvos.1.7.0)
+        run: |
+          git clone --depth 1 --branch v3.47.1-tvos.1.7.0 \
+            https://github.com/fluttertv/flutter-tvos.git "$HOME/flutter-tvos"
+          echo "$HOME/flutter-tvos/bin" >> "$GITHUB_PATH"
+          # GITHUB_PATH 只对后续步骤生效，本步骤内需用全路径调用
+          "$HOME/flutter-tvos/bin/flutter-tvos" precache
 
-      - name: Install dependencies
-        run: flutter pub get
-
+      # fork 内置的 Flutter SDK 与原版一致（纯 Dart 分析，与平台无关）。
       - name: Analyze
-        # flutter analyze 默认把 info/warning 级 lint 视为 fatal（exit 1）。
-        # 本阶段以"tvOS 可编译"为首要目标，只让 error 级问题阻塞构建，
-        # info/warning 提示打印出来供人工清理，不阻断 CI。
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: |
+          "$HOME/flutter-tvos/flutter/bin/flutter" analyze --no-fatal-infos --no-fatal-warnings
 
-      - name: Build tvOS
-        run: flutter build ios --platform=tvos --no-codesign
+      # 仓库不提交 tvos/（不完整且 fork 的 create 遇到已存在目录会跳过），
+      # 由 fork 模板在 CI 上生成完整 tvOS Xcode 工程（含 project.pbxproj）。
+      - name: Scaffold tvOS project
+        run: flutter-tvos create --platforms=tvos .
+
+      # 模拟器 debug 构建无需代码签名；编译全部 Dart 并预置引擎 payload。
+      - name: Build tvOS (simulator, debug)
+        run: flutter-tvos build tvos --simulator
