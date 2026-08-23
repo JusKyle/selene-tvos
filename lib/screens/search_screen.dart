@@ -10,6 +10,9 @@ import '../models/search_result.dart';
 import '../models/video_info.dart';
 import '../widgets/video_menu_bottom_sheet.dart';
 import '../widgets/custom_switch.dart';
+import '../widgets/tv_focusable.dart';
+import '../widgets/tv_focus_grid.dart';
+import '../widgets/tv_fullscreen_panel.dart';
 import '../widgets/favorites_grid.dart';
 import '../widgets/search_result_agg_grid.dart';
 import '../widgets/search_results_grid.dart';
@@ -298,6 +301,75 @@ class _SearchScreenState extends State<SearchScreen>
 
   /// 显示清空确认弹窗
   void _showClearConfirmation() {
+    // tvOS 使用全屏面板替代 showDialog
+    if (PlatformDetector.isTVOS) {
+      TVFullscreenPanel.show<void>(
+        context,
+        title: '清空搜索历史',
+        items: [
+          TVFocusableWidget(
+            onTap: () {
+              Navigator.of(context).pop();
+              _clearSearchHistory();
+            },
+            child: Container(
+              width: double.infinity,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFe74c3c),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.delete_outline,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '确认清空',
+                    style: FontUtils.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          TVFocusableWidget(
+            onTap: () {
+              Navigator.of(context).pop();
+            },
+            child: Container(
+              width: double.infinity,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF444444),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  '取消',
+                  style: FontUtils.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -548,10 +620,13 @@ class _SearchScreenState extends State<SearchScreen>
                       child: _buildSearchError(themeService),
                     ),
                   // 搜索历史（只有在从未搜索过时显示）
+                  // tvOS 不包裹 SingleChildScrollView，由 _buildTVSearchHistory 内部提供滚动
                   Expanded(
-                    child: SingleChildScrollView(
-                      child: _buildSearchHistory(themeService),
-                    ),
+                    child: PlatformDetector.isTVOS
+                        ? _buildSearchHistory(themeService)
+                        : SingleChildScrollView(
+                            child: _buildSearchHistory(themeService),
+                          ),
                   ),
                 ],
                 if (_hasSearched) ...[
@@ -652,6 +727,11 @@ class _SearchScreenState extends State<SearchScreen>
           ),
         ),
       );
+    }
+
+    // tvOS 使用纵向 Focus 列表，长按删除改为 Menu 键删除
+    if (PlatformDetector.isTVOS) {
+      return _buildTVSearchHistory(themeService);
     }
 
     return Column(
@@ -922,6 +1002,129 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
+  /// tvOS 搜索历史：纵向 Focus 列表，Select 搜索，Menu 键删除
+  Widget _buildTVSearchHistory(ThemeService themeService) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.only(left: 22.0, right: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '搜索历史',
+                style: FontUtils.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: themeService.isDarkMode
+                      ? const Color(0xFFffffff)
+                      : const Color(0xFF2c3e50),
+                ),
+              ),
+              // 清空按钮：Focus 触发清空确认面板
+              TVFocusableWidget(
+                onTap: _showClearConfirmation,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Text(
+                    '清空',
+                    style: FontUtils.poppins(
+                      fontSize: 14,
+                      color: const Color(0xFFb0b0b0),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: TVFocusGrid(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _searchHistory.length,
+              itemBuilder: (context, index) {
+                final history = _searchHistory[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildTVHistoryItem(themeService, history),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// tvOS 单个搜索历史项：Select 搜索，Menu 删除
+  Widget _buildTVHistoryItem(ThemeService themeService, String history) {
+    return TVFocusableWidget(
+      onTap: () {
+        _searchController.text = history;
+        setState(() {
+          _searchQuery = history;
+        });
+        _performSearch(history);
+      },
+      onMenu: () {
+        _deleteSearchHistory(history);
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color:
+              themeService.isDarkMode ? const Color(0xFF1e1e1e) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: themeService.isDarkMode
+                ? const Color(0xFF333333)
+                : const Color(0xFFe9ecef),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              LucideIcons.history,
+              size: 18,
+              color: themeService.isDarkMode
+                  ? const Color(0xFFb0b0b0)
+                  : const Color(0xFF7f8c8d),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                history,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: FontUtils.poppins(
+                  fontSize: 16,
+                  color: themeService.isDarkMode
+                      ? const Color(0xFFffffff)
+                      : const Color(0xFF2c3e50),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.close,
+              size: 16,
+              color: themeService.isDarkMode
+                  ? const Color(0xFF666666)
+                  : const Color(0xFF95a5a6),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// 构建搜索错误显示
   Widget _buildSearchError(ThemeService themeService) {
     final error = _searchError;
@@ -1044,11 +1247,8 @@ class _SearchScreenState extends State<SearchScreen>
                       ),
                     ),
                     const SizedBox(width: 6),
-                    MouseRegion(
-                      cursor: DeviceUtils.isPC()
-                          ? SystemMouseCursors.click
-                          : MouseCursor.defer,
-                      child: Transform.translate(
+                    Builder(builder: (context) {
+                      final switchWidget = Transform.translate(
                         offset: const Offset(0, 1.0),
                         child: CustomSwitch(
                           value: _useAggregatedView,
@@ -1064,8 +1264,25 @@ class _SearchScreenState extends State<SearchScreen>
                           width: 32,
                           height: 16,
                         ),
-                      ),
-                    ),
+                      );
+                      // tvOS 上聚合开关需要可 Focus
+                      if (PlatformDetector.isTVOS) {
+                        return TVFocusableWidget(
+                          onTap: () {
+                            setState(() {
+                              _useAggregatedView = !_useAggregatedView;
+                            });
+                          },
+                          child: switchWidget,
+                        );
+                      }
+                      return MouseRegion(
+                        cursor: DeviceUtils.isPC()
+                            ? SystemMouseCursors.click
+                            : MouseCursor.defer,
+                        child: switchWidget,
+                      );
+                    }),
                   ],
                 ),
             ],
@@ -1457,6 +1674,10 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   Widget _buildFilterSection(ThemeService themeService) {
+    // tvOS 使用 Focus 包裹的筛选控件
+    if (PlatformDetector.isTVOS) {
+      return _buildTVFilterSection(themeService);
+    }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -1479,6 +1700,134 @@ class _SearchScreenState extends State<SearchScreen>
           }),
           _buildYearSortButton(),
         ],
+      ),
+    );
+  }
+
+  /// tvOS 筛选器：全部控件用 TVFocusableWidget 包裹，确保 Focus 导航
+  Widget _buildTVFilterSection(ThemeService themeService) {
+    return TVFocusGrid(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildTVFilterPill('来源', _sourceOptions, _selectedSource,
+                (newValue) {
+              setState(() {
+                _selectedSource = newValue;
+              });
+            }, isFirst: true),
+            _buildTVFilterPill('标题', _titleOptions, _selectedTitle,
+                (newValue) {
+              setState(() {
+                _selectedTitle = newValue;
+              });
+            }),
+            _buildTVFilterPill('年份', _yearOptions, _selectedYear, (newValue) {
+              setState(() {
+                _selectedYear = newValue;
+              });
+            }),
+            _buildTVYearSortButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// tvOS 筛选胶囊：Select 打开全屏筛选面板
+  Widget _buildTVFilterPill(
+      String title,
+      List<SelectorOption> options,
+      String selectedValue,
+      ValueChanged<String> onSelected,
+      {bool isFirst = false}) {
+    final isDefault = selectedValue == 'all';
+    return TVFocusableWidget(
+      onTap: () {
+        _showFilterOptions(context, title, options, selectedValue, onSelected);
+      },
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(isFirst ? 0 : 8, 6, 8, 6),
+        child: Row(
+          children: [
+            Text(
+              title,
+              style: FontUtils.poppins(
+                fontSize: 13,
+                color: isDefault
+                    ? Theme.of(context).textTheme.bodySmall?.color
+                    : const Color(0xFF27AE60),
+                fontWeight:
+                    isDefault ? FontWeight.normal : FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.arrow_drop_down,
+              size: 18,
+              color: isDefault
+                  ? Theme.of(context).textTheme.bodySmall?.color
+                  : const Color(0xFF27AE60),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// tvOS 年份排序按钮：Select 循环切换排序
+  Widget _buildTVYearSortButton() {
+    IconData icon;
+    switch (_yearSortOrder) {
+      case SortOrder.desc:
+        icon = LucideIcons.arrowDown10;
+        break;
+      case SortOrder.asc:
+        icon = LucideIcons.arrowUp10;
+        break;
+      case SortOrder.none:
+        icon = LucideIcons.arrowDownUp;
+        break;
+    }
+    final isDefault = _yearSortOrder == SortOrder.none;
+    return TVFocusableWidget(
+      onTap: () {
+        setState(() {
+          if (_yearSortOrder == SortOrder.none) {
+            _yearSortOrder = SortOrder.desc;
+          } else if (_yearSortOrder == SortOrder.desc) {
+            _yearSortOrder = SortOrder.asc;
+          } else {
+            _yearSortOrder = SortOrder.none;
+          }
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          children: [
+            Text(
+              '年份',
+              style: FontUtils.poppins(
+                fontSize: 13,
+                color: isDefault
+                    ? Theme.of(context).textTheme.bodySmall?.color
+                    : const Color(0xFF27AE60),
+                fontWeight:
+                    isDefault ? FontWeight.normal : FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              icon,
+              size: 16,
+              color: isDefault
+                  ? Theme.of(context).textTheme.bodySmall?.color
+                  : const Color(0xFF27AE60),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1551,6 +1900,11 @@ class _SearchScreenState extends State<SearchScreen>
       List<SelectorOption> options,
       String selectedValue,
       ValueChanged<String> onSelected) {
+    // tvOS 使用全屏面板替代底部弹出/对话框
+    if (PlatformDetector.isTVOS) {
+      _showTVFilterOptions(context, title, options, selectedValue, onSelected);
+      return;
+    }
     if (DeviceUtils.isPC()) {
       // PC端使用 filter_options_selector.dart 中的 PC 组件
       showFilterOptionsSelector(
@@ -1657,6 +2011,68 @@ class _SearchScreenState extends State<SearchScreen>
         },
       );
     }
+  }
+
+  /// tvOS 筛选选项：使用全屏面板展示
+  void _showTVFilterOptions(
+      BuildContext context,
+      String title,
+      List<SelectorOption> options,
+      String selectedValue,
+      ValueChanged<String> onSelected) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    TVFullscreenPanel.show<void>(
+      context,
+      title: title,
+      items: options.map((option) {
+        final isSelected = option.value == selectedValue;
+        return TVFocusableWidget(
+          onTap: () {
+            onSelected(option.value);
+            Navigator.of(context).pop();
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? const Color(0xFF27AE60)
+                  : isDark
+                      ? const Color(0xFF1e1e1e)
+                      : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? const Color(0xFF27AE60)
+                    : isDark
+                        ? const Color(0xFF333333)
+                        : const Color(0xFFe9ecef),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    option.label,
+                    style: FontUtils.poppins(
+                      fontSize: 16,
+                      color: isSelected
+                          ? Colors.white
+                          : isDark
+                              ? const Color(0xFFffffff)
+                              : const Color(0xFF2c3e50),
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  const Icon(Icons.check, color: Colors.white, size: 20),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 
   Widget _buildYearSortButton() {
