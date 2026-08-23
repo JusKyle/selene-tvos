@@ -23,7 +23,9 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: flutter analyze
+        # flutter analyze 默认把 info 级 lint 视为 fatal（exit 1），
+        # 这里只让 error 级问题导致失败，info 提示不阻塞构建。
+        run: flutter analyze --no-fatal-infos
 
       - name: Build tvOS
         run: flutter build ios --platform=tvos --no-codesign
