@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../core/platform_detector.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';

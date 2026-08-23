@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import '../core/platform_detector.dart';
 import '../widgets/continue_watching_section.dart';

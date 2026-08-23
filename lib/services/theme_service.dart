@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:io' show Platform;
 import '../core/platform_detector.dart';
 import 'package:macos_window_utils/macos_window_utils.dart';
 

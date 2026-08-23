@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import '../core/platform_detector.dart';
 import 'package:flutter/services.dart';

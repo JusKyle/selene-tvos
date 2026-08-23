@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../core/platform_detector.dart';
 import '../models/video_info.dart';

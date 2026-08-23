@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import '../core/platform_detector.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';

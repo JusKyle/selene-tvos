@@ -8,7 +8,6 @@ import '../services/api_service.dart';
 import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
 import 'user_menu.dart';
-import 'dart:io' show Platform;
 import 'dart:async';
 import 'windows_title_bar.dart';
 import '../core/platform_detector.dart';

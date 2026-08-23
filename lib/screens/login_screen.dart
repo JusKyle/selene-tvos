@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'dart:async';
 import '../core/platform_detector.dart';
 import '../services/user_data_service.dart';

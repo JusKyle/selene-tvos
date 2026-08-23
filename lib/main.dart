@@ -9,7 +9,6 @@ import 'services/theme_service.dart';
 import 'services/douban_cache_service.dart';
 import 'services/local_mode_storage_service.dart';
 import 'services/subscription_service.dart';
-import 'dart:io' show Platform;
 import 'core/platform_detector.dart';
 import 'package:macos_window_utils/macos_window_utils.dart';
 import 'package:media_kit/media_kit.dart';
