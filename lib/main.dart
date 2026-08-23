@@ -70,9 +70,16 @@ class SeleneApp extends StatelessWidget {
           return MaterialApp(
             title: 'Selene',
             debugShowCheckedModeBanner: false,
-            theme: themeService.lightTheme,
-            darkTheme: themeService.darkTheme,
-            themeMode: themeService.themeMode,
+            // tvOS 强制使用暗色高对比度主题（10-foot UI）
+            theme: PlatformDetector.isTVOS
+                ? themeService.tvTheme
+                : themeService.lightTheme,
+            darkTheme: PlatformDetector.isTVOS
+                ? themeService.tvTheme
+                : themeService.darkTheme,
+            themeMode: PlatformDetector.isTVOS
+                ? ThemeMode.dark
+                : themeService.themeMode,
             home: const AppWrapper(),
             builder: (context, child) {
               // 为 Windows 平台改善字体渲染

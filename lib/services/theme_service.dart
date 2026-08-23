@@ -200,4 +200,41 @@ class ThemeService extends ChangeNotifier {
       fontFamily: PlatformDetector.isWindows ? 'Microsoft YaHei' : null,
     );
   }
+
+  /// tvOS 主题：暗色 + 大字体 + 高对比度（10-foot UI）
+  ThemeData get tvTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      // 基于 seed 生成配色，再覆盖为高对比度
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF2c3e50),
+        brightness: Brightness.dark,
+      ).copyWith(
+        primary: Colors.white,
+        onPrimary: Colors.black,
+        surface: const Color(0xFF1A1A1A),
+        onSurface: Colors.white,
+      ),
+      scaffoldBackgroundColor: const Color(0xFF000000),
+      // 更大的文字（10-foot UI）
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(fontSize: 44, fontWeight: FontWeight.bold),
+        displayMedium: TextStyle(fontSize: 36, fontWeight: FontWeight.w600),
+        headlineMedium: TextStyle(fontSize: 30, fontWeight: FontWeight.w600),
+        titleLarge: TextStyle(fontSize: 26, fontWeight: FontWeight.w600),
+        titleMedium: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
+        bodyLarge: TextStyle(fontSize: 20),
+        bodyMedium: TextStyle(fontSize: 18),
+        bodySmall: TextStyle(fontSize: 16),
+      ),
+      cardTheme: const CardThemeData(
+        color: Color(0xFF1e1e1e),
+        elevation: 0,
+      ),
+      // 更大的按钮（最小 60x60 交互目标）
+      visualDensity: VisualDensity.comfortable,
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+    );
+  }
 }
