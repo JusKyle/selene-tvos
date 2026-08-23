@@ -365,7 +365,7 @@ class _PlayerScreenState extends State<PlayerScreen>
       // 异步保存播放记录（不等待结果）
       PageCacheService().savePlayRecord(playRecord, context).then((_) {
         debugPrint(
-            '保存播放进度 [场景: $scene]: source: $currentSourceSnapshot, id: $currentIDSnapshot, 第${currentEpisodeIndexSnapshot + 1}集, 时间: ${playTime}秒');
+            '保存播放进度 [场景: $scene]: source: $currentSourceSnapshot, id: $currentIDSnapshot, 第${currentEpisodeIndexSnapshot + 1}集, 时间: $playTime秒');
       }).catchError((e) {
         debugPrint('保存播放进度失败 [场景: $scene]: $e');
       });

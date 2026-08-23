@@ -62,6 +62,9 @@ class PageCacheService
     }
 
     // 缓存未命中，直接走接口并保存到缓存
+    if (!context.mounted) {
+      return DataOperationResult.error('页面已销毁');
+    }
     return await getPlayRecordsDirect(context);
   }
 
@@ -77,6 +80,9 @@ class PageCacheService
     const cacheKey = 'play_records';
 
     try {
+      if (!context.mounted) {
+        return DataOperationResult.error('页面已销毁');
+      }
       final response = await ApiService.get<Map<String, dynamic>>(
         '/api/playrecords',
         context: context,
@@ -116,6 +122,9 @@ class PageCacheService
     const cacheKey = 'play_records';
 
     try {
+      if (!context.mounted) {
+        return DataOperationResult.error('页面已销毁');
+      }
       final response = await ApiService.get<Map<String, dynamic>>(
         '/api/playrecords',
         context: context,
@@ -156,6 +165,9 @@ class PageCacheService
     _addPlayRecordToCache(playRecord);
 
     try {
+      if (!context.mounted) {
+        return DataOperationResult.error('页面已销毁');
+      }
       final response = await ApiService.savePlayRecord(playRecord, context);
       if (response.success) {
         return DataOperationResult.success(null);
@@ -180,6 +192,9 @@ class PageCacheService
     _removePlayRecordFromCache(source, id);
 
     try {
+      if (!context.mounted) {
+        return DataOperationResult.error('页面已销毁');
+      }
       final response = await ApiService.deletePlayRecord(source, id, context);
       if (response.success) {
         return DataOperationResult.success(null);
@@ -203,6 +218,9 @@ class PageCacheService
     clearCache('play_records');
 
     try {
+      if (!context.mounted) {
+        return DataOperationResult.error('页面已销毁');
+      }
       final response = await ApiService.clearPlayRecord(context);
       if (response.success) {
         return DataOperationResult.success(null);
@@ -277,6 +295,9 @@ class PageCacheService
     }
 
     // 缓存未命中，直接走接口并保存到缓存
+    if (!context.mounted) {
+      return DataOperationResult.error('页面已销毁');
+    }
     return await getFavoritesDirect(context);
   }
 
@@ -291,6 +312,9 @@ class PageCacheService
     const cacheKey = 'favorites';
 
     try {
+      if (!context.mounted) {
+        return DataOperationResult.error('页面已销毁');
+      }
       final response = await ApiService.getFavorites(context);
 
       if (response.success && response.data != null) {
@@ -317,6 +341,9 @@ class PageCacheService
     const cacheKey = 'favorites';
 
     try {
+      if (!context.mounted) {
+        return;
+      }
       final response = await ApiService.getFavorites(context);
 
       if (response.success && response.data != null) {
@@ -353,6 +380,9 @@ class PageCacheService
     _addFavoriteToCache(source, id, favoriteData);
 
     try {
+      if (!context.mounted) {
+        return DataOperationResult.error('页面已销毁');
+      }
       final response =
           await ApiService.favorite(source, id, favoriteData, context);
       if (response.success) {
@@ -377,6 +407,9 @@ class PageCacheService
     _removeFavoriteFromCache(source, id);
 
     try {
+      if (!context.mounted) {
+        return DataOperationResult.error('页面已销毁');
+      }
       final response = await ApiService.unfavorite(source, id, context);
       if (response.success) {
         return DataOperationResult.success(null);
@@ -554,7 +587,7 @@ class PageCacheService
         final existingItem = cachedData[existingIndex];
         final updatedHistory = [
           existingItem,
-          ...cachedData.where((item) => item != query).toList()
+          ...cachedData.where((item) => item != query)
         ];
         setCache(cacheKey, updatedHistory);
       }

@@ -472,17 +472,18 @@ class _ShowScreenState extends State<ShowScreen> {
 
   Future<void> _launchURL(String url) async {
     final uri = Uri.parse(url);
+    final messenger = ScaffoldMessenger.of(context);
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(content: Text('Could not launch $url')),
         );
       }
     } catch (_) {
       // tvOS 无 url_launcher 实现，canLaunchUrl 会抛 MissingPluginException
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text('Could not launch $url')),
       );
     }
