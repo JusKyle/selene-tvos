@@ -10,29 +10,11 @@ import 'services/douban_cache_service.dart';
 import 'services/local_mode_storage_service.dart';
 import 'services/subscription_service.dart';
 import 'core/platform_detector.dart';
-import 'package:macos_window_utils/macos_window_utils.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   PlatformDetector.init();
-
-  // 初始化 media_kit (用于 PC 端播放器)
-  if (!PlatformDetector.isTVOS) {
-    MediaKit.ensureInitialized();
-  }
-
-  // 初始化 macOS 窗口配置
-  if (PlatformDetector.isMacOS) {
-    await WindowManipulator.initialize(enableWindowDelegate: true);
-    // 设置标题栏为透明，让菜单栏颜色跟随主题
-    await WindowManipulator.makeTitlebarTransparent();
-    await WindowManipulator.enableFullSizeContentView();
-    // 隐藏标题栏中的 Title
-    await WindowManipulator.hideTitle();
-  }
 
   // 初始化豆瓣缓存服务
   final cacheService = DoubanCacheService();
@@ -42,20 +24,6 @@ void main() async {
   cacheService.startPeriodicCleanup();
 
   runApp(const SeleneApp());
-
-  // 初始化 Windows 窗口配置
-  if (PlatformDetector.isWindows) {
-    doWhenWindowReady(() {
-      final win = appWindow;
-      const initialSize = Size(1024, 600);
-      const minSize = Size(1024, 600);
-      win.minSize = minSize;
-      win.size = initialSize;
-      win.alignment = Alignment.center;
-      win.title = "Selene";
-      win.show();
-    });
-  }
 }
 
 class SeleneApp extends StatelessWidget {

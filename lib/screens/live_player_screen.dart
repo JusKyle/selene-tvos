@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/platform_detector.dart';
 import 'package:flutter/services.dart';
-import '../widgets/video_player_surface.dart';
 import '../widgets/video_player_widget.dart';
 import '../models/live_channel.dart';
 import '../models/live_source.dart';
@@ -11,7 +10,6 @@ import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
 import '../services/theme_service.dart';
 import 'package:provider/provider.dart';
-import '../widgets/windows_title_bar.dart';
 import '../widgets/switch_loading_overlay.dart';
 import '../widgets/filter_pill_hover.dart';
 import '../widgets/filter_options_selector.dart';
@@ -496,11 +494,6 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
             children: [
               Column(
                 children: [
-                  // Windows 自定义标题栏（tvOS 不需要）
-                  if (PlatformDetector.isWindows && !PlatformDetector.isTVOS)
-                    const WindowsTitleBar(
-                      customBackgroundColor: Color(0xFF000000),
-                    ),
                   // 主要内容
                   Expanded(
                     child: PlatformDetector.isTVOS
@@ -688,15 +681,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
   Widget _buildPlayerWidget() {
     final videoUrl = _currentChannel.url;
 
-    VideoPlayerSurface surfaceForPlatform() {
-      if (PlatformDetector.isTVOS) return VideoPlayerSurface.tv;
-      return DeviceUtils.isPC()
-          ? VideoPlayerSurface.desktop
-          : VideoPlayerSurface.mobile;
-    }
-
     return VideoPlayerWidget(
-      surface: surfaceForPlatform(),
       key: ValueKey(_currentChannel.id),
       url: videoUrl,
       headers: <String, String>{
@@ -705,21 +690,9 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
             : 'AptvPlayer/1.4.10',
       },
       videoTitle: _currentChannel.name,
-      onBackPressed:
-          _isWebFullscreen ? _exitWebFullscreen : () => Navigator.pop(context),
+      onBackPressed: () => Navigator.pop(context),
       onControllerCreated: (controller) {
         _videoPlayerController = controller;
-      },
-      onWebFullscreenChanged: PlatformDetector.isTVOS
-          ? null
-          : (isWebFullscreen) {
-              setState(() {
-                _isWebFullscreen = isWebFullscreen;
-              });
-            },
-      onExitFullScreen: () {
-        // 退出全屏后，重新滚动到当前节目
-        _scrollToCurrentProgram();
       },
       onReady: _onVideoPlayerReady,
       live: true,

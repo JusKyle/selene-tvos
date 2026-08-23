@@ -6,7 +6,6 @@ import 'tv_focusable.dart';
 
 /// Apple TV (tvOS) dedicated player controls.
 ///
-/// Replaces [PCPlayerControls] and [MobilePlayerControls] on tvOS.
 /// Large high-contrast icons, thick progress bar, full-screen focus
 /// panels for speed / episode / source selection.
 class TVPlayerControls extends StatefulWidget {

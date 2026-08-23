@@ -9,7 +9,6 @@ import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
 import 'user_menu.dart';
 import 'dart:async';
-import 'windows_title_bar.dart';
 import '../core/platform_detector.dart';
 import 'tv_focusable.dart';
 import 'tv_focus_grid.dart';
@@ -357,14 +356,6 @@ body: _buildBody(context, themeService),
                 ),
                 child: Column(
                   children: [
-                    if (PlatformDetector.isWindows)
-                      WindowsTitleBar(
-                        customBackgroundColor: widget.isSearchMode
-                            ? (themeService.isDarkMode
-                                ? const Color(0xFF121212)
-                                : const Color(0xFFf5f5f5))
-                            : null,
-                      ),
                     _buildHeader(context, themeService),
                     Expanded(
                       child: widget.content,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../core/platform_detector.dart';
-import 'package:macos_window_utils/macos_window_utils.dart';
 
 class ThemeService extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
@@ -22,31 +21,12 @@ class ThemeService extends ChangeNotifier {
     // 每次启动都默认跟随系统主题，不保存用户的手动选择
     _themeMode = ThemeMode.system;
     notifyListeners();
-    _updateMacOSWindowAppearance();
   }
 
   void setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
     // 不再保存到 SharedPreferences，每次启动都重新遵循系统主题
     notifyListeners();
-    _updateMacOSWindowAppearance();
-  }
-
-  // 更新 macOS 窗口外观
-  void _updateMacOSWindowAppearance() async {
-    if (!PlatformDetector.isMacOS) return;
-
-    try {
-      // 使用 WindowManipulator.overrideMacOSBrightness 来设置窗口外观
-      if (isDarkMode) {
-        await WindowManipulator.overrideMacOSBrightness(dark: true);
-      } else {
-        await WindowManipulator.overrideMacOSBrightness(dark: false);
-      }
-    } catch (e) {
-      // 忽略错误，可能在某些环境下不支持
-      debugPrint('Failed to update macOS window appearance: $e');
-    }
   }
 
   void toggleTheme(BuildContext context) async {

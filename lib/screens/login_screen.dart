@@ -8,7 +8,6 @@ import '../services/local_mode_storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
-import '../widgets/windows_title_bar.dart';
 import '../widgets/tv_focusable.dart';
 import '../widgets/custom_switch.dart';
 import 'home_screen.dart';
@@ -587,8 +586,6 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         child: Column(
           children: [
-            // Windows 自定义标题栏（透明背景）
-            if (PlatformDetector.isWindows) const WindowsTitleBar(forceBlack: true),
             // 主要内容
             Expanded(
               child: SafeArea(
