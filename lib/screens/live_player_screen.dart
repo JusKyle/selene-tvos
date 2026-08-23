@@ -47,7 +47,6 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
   late bool _isPortraitTablet;
 
   // 播放器控制器
-  VideoPlayerWidgetController? _videoPlayerController;
 
   // 播放器的 GlobalKey
   final GlobalKey _playerKey = GlobalKey();
@@ -679,9 +678,6 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
       },
       videoTitle: _currentChannel.name,
       onBackPressed: () => Navigator.pop(context),
-      onControllerCreated: (controller) {
-        _videoPlayerController = controller;
-      },
       onReady: _onVideoPlayerReady,
       live: true,
     );
