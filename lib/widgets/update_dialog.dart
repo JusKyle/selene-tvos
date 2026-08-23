@@ -199,9 +199,13 @@ class UpdateDialog extends StatelessWidget {
                             final url = VersionService.getReleaseUrl(
                                 versionInfo.latestVersion);
                             final uri = Uri.parse(url);
-                            if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri,
-                                  mode: LaunchMode.externalApplication);
+                            try {
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri,
+                                    mode: LaunchMode.externalApplication);
+                              }
+                            } catch (_) {
+                              // tvOS 无 url_launcher 实现，canLaunchUrl 会抛 MissingPluginException
                             }
                             if (context.mounted) {
                               Navigator.of(context).pop();
