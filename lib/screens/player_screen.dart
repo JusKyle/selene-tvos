@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../core/platform_detector.dart';
 import '../widgets/video_player_surface.dart';
 import '../widgets/video_player_widget.dart';
 import '../widgets/video_card.dart';
@@ -158,7 +159,10 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   /// 设置竖屏方向
+  ///
+  /// tvOS 不受方向锁定控制，直接返回。
   void _setPortraitOrientation() {
+    if (PlatformDetector.isTVOS) return;
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -167,6 +171,7 @@ class _PlayerScreenState extends State<PlayerScreen>
 
   /// 恢复所有方向
   void _restoreOrientation() {
+    if (PlatformDetector.isTVOS) return;
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -1063,12 +1068,16 @@ class _PlayerScreenState extends State<PlayerScreen>
   Widget _buildPlayerWidget() {
     final isPC = DeviceUtils.isPC();
 
+    VideoPlayerSurface _surfaceForPlatform() {
+      if (PlatformDetector.isTVOS) return VideoPlayerSurface.tv;
+      return isPC ? VideoPlayerSurface.desktop : VideoPlayerSurface.mobile;
+    }
+
     return Stack(
       children: [
         if (!_isCasting)
           VideoPlayerWidget(
-            surface:
-                isPC ? VideoPlayerSurface.desktop : VideoPlayerSurface.mobile,
+            surface: _surfaceForPlatform(),
             url: null,
             onBackPressed: _onBackPressed,
             onControllerCreated: (controller) {
@@ -1088,11 +1097,13 @@ class _PlayerScreenState extends State<PlayerScreen>
             currentEpisodeIndex: currentEpisodeIndex,
             totalEpisodes: totalEpisodes,
             sourceName: currentDetail?.sourceName ?? currentSource,
-            onWebFullscreenChanged: (isWebFullscreen) {
-              setState(() {
-                _isWebFullscreen = isWebFullscreen;
-              });
-            },
+            onWebFullscreenChanged: PlatformDetector.isTVOS
+                ? null
+                : (isWebFullscreen) {
+                    setState(() {
+                      _isWebFullscreen = isWebFullscreen;
+                    });
+                  },
           ),
         if (_isCasting && _dlnaDevice != null)
           DLNAPlayer(
@@ -2569,13 +2580,22 @@ class _PlayerScreenState extends State<PlayerScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInitialized) {
+      // 确保平台检测就绪
+      PlatformDetector.init();
+
       // 缓存设备类型，避免分辨率变化时改变布局
-      _isTablet = DeviceUtils.isTablet(context);
-      _isPortraitTablet = DeviceUtils.isPortraitTablet(context);
+      // tvOS 视同"桌面宽屏"处理，不走手机/平板分支
+      if (PlatformDetector.isTVOS) {
+        _isTablet = true;
+        _isPortraitTablet = false;
+      } else {
+        _isTablet = DeviceUtils.isTablet(context);
+        _isPortraitTablet = DeviceUtils.isPortraitTablet(context);
+      }
 
       // 设置屏幕方向（平板除外）
-      // 如果是平板，不强制竖屏
-      if (!_isTablet) {
+      // tvOS 不需要方向锁定
+      if (!PlatformDetector.isTVOS && !_isTablet) {
         _setPortraitOrientation();
       }
       // 保存当前的系统UI样式
@@ -2660,8 +2680,8 @@ class _PlayerScreenState extends State<PlayerScreen>
           ),
           child: Column(
             children: [
-              // Windows 自定义标题栏（播放页使用纯黑背景）
-              if (Platform.isWindows)
+              // Windows 自定义标题栏（tvOS 不需要）
+              if (Platform.isWindows && !PlatformDetector.isTVOS)
                 const WindowsTitleBar(
                   customBackgroundColor: Color(0xFF000000),
                 ),
@@ -2669,8 +2689,11 @@ class _PlayerScreenState extends State<PlayerScreen>
               Expanded(
                 child: Stack(
                   children: [
+                    // tvOS 全屏播放器布局（不走 tablet/phone 分支）
+                    if (PlatformDetector.isTVOS)
+                      _buildTVLayout(theme)
                     // 主要内容（不包含播放器）
-                    if (!_isWebFullscreen)
+                    else if (!_isWebFullscreen)
                       if (_isTablet && !_isPortraitTablet)
                         // 平板横屏模式：左右布局
                         _buildTabletLandscapeLayout(theme)
@@ -2681,7 +2704,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                         // 手机模式：保持原有布局
                         _buildPhoneLayout(theme),
                     // 播放器层（使用 Positioned 控制位置和大小）
-                    _buildPlayerLayer(theme),
+                    if (!PlatformDetector.isTVOS) _buildPlayerLayer(theme),
+                    // tvOS 全屏播放器层
+                    if (PlatformDetector.isTVOS) _buildTVPlayerLayer(theme),
                     // 错误覆盖层
                     if (_showError && _errorMessage != null)
                       _buildErrorOverlay(theme),
@@ -2699,6 +2724,9 @@ class _PlayerScreenState extends State<PlayerScreen>
 
   /// 构建播放器层（使用 Positioned 控制位置和大小）
   Widget _buildPlayerLayer(ThemeData theme) {
+    // tvOS 不经过此方法
+    if (PlatformDetector.isTVOS) return const SizedBox.shrink();
+
     final statusBarHeight = MediaQuery.maybeOf(context)?.padding.top ?? 0;
     final macOSPadding = DeviceUtils.isMacOS() ? 32.0 : 0.0;
     final topOffset = statusBarHeight + macOSPadding;
@@ -2781,6 +2809,31 @@ class _PlayerScreenState extends State<PlayerScreen>
         );
       }
     }
+  }
+
+  /// 构建 tvOS 全屏布局。
+  ///
+  /// Apple TV 不需要播放器之外的详情面板、选集区、换源区等；
+  /// 集数和源的选择通过 TVPlayerControls 内的全屏 Focus 面板完成。
+  Widget _buildTVLayout(ThemeData theme) {
+    return Container(color: Colors.black);
+  }
+
+  /// tvOS 全屏播放器层。
+  ///
+  /// 占据整个屏幕，直接返回 [VideoPlayerWidget]（无外框装饰）。
+  Widget _buildTVPlayerLayer(ThemeData theme) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        key: _playerKey,
+        color: Colors.black,
+        child: _buildPlayerWidget(),
+      ),
+    );
   }
 
   /// 构建手机模式布局（不包含播放器）
