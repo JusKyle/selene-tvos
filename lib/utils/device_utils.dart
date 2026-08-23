@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../core/platform_detector.dart';
 
 /// 设备类型工具类
 class DeviceUtils {
@@ -47,6 +48,11 @@ class DeviceUtils {
   /// 判断当前平台是否是 PC（Windows 或 macOS）
   static bool isPC() {
     return isWindows() || isMacOS();
+  }
+
+  /// 判断当前平台是否是 tvOS
+  static bool isTVOS() {
+    return PlatformDetector.isTVOS;
   }
 
   /// 根据屏幕宽度动态计算平板模式下的列数（6～8列）
