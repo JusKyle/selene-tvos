@@ -14,7 +14,6 @@ class TVFocusableWidget extends StatefulWidget {
   final FocusNode? focusNode;
   final bool enabled;
   final bool autofocus;
-  final FocusTraversalPolicy? focusTraversalPolicy;
 
   const TVFocusableWidget({
     super.key,
@@ -28,7 +27,6 @@ class TVFocusableWidget extends StatefulWidget {
     this.focusNode,
     this.enabled = true,
     this.autofocus = false,
-    this.focusTraversalPolicy,
   });
 
   @override
@@ -66,7 +64,6 @@ class _TVFocusableWidgetState extends State<TVFocusableWidget> {
       focusNode: _node,
       canRequestFocus: widget.enabled,
       autofocus: widget.autofocus,
-      focusTraversalPolicy: widget.focusTraversalPolicy,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent) {
           if (event.logicalKey == LogicalKeyboardKey.select ||

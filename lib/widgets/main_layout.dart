@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:selene/services/search_service.dart';
@@ -383,7 +384,7 @@ body: _buildBody(context, themeService),
     if (PlatformDetector.isTVOS) {
       return Focus(
         autofocus: true,
-        onKey: _handleGlobalKey,
+        onKeyEvent: _handleGlobalKey,
         child: scaffoldBody,
       );
     }
@@ -393,7 +394,7 @@ body: _buildBody(context, themeService),
 
   /// tvOS 全局按键处理（Select 选中、Menu 返回/刷新）
   KeyEventResult _handleGlobalKey(FocusNode node, KeyEvent event) {
-    if (event is RawKeyDownEvent) {
+    if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.select) {
         // Select 键触发确认操作，交由各 Focus 节点处理
         return KeyEventResult.ignored;
@@ -1043,7 +1044,7 @@ body: _buildBody(context, themeService),
     // tvOS 平台包裹 FocusTraversalGroup 确保导航顺序
     if (isTVOS) {
       return FocusTraversalGroup(
-        order: TVGridFocusTraversal(),
+        policy: TVGridFocusTraversal(),
         child: navBar,
       );
     }

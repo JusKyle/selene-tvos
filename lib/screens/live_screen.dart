@@ -311,7 +311,7 @@ class _LiveScreenState extends State<LiveScreen>
         // tvOS：外层 Focus 遍历组，串联顶部筛选栏与频道列表
         if (PlatformDetector.isTVOS) {
           return FocusTraversalGroup(
-            order: TVGridFocusTraversal(),
+            policy: TVGridFocusTraversal(),
             child: column,
           );
         }
@@ -727,7 +727,7 @@ class _LiveScreenState extends State<LiveScreen>
       color: Colors.transparent,
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: FocusTraversalGroup(
-        order: TVGridFocusTraversal(),
+        policy: TVGridFocusTraversal(),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),

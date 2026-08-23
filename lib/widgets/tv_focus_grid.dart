@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 /// Apple TV 网格 Focus 导航策略
 /// 确保方向键按视觉顺序（从上到下，从左到右）导航
-class TVGridFocusTraversal extends OrderFocusTraversalPolicy {
+class TVGridFocusTraversal extends FocusTraversalPolicy
+    with DirectionalFocusTraversalPolicyMixin {
   @override
   Iterable<FocusNode> sortDescendants(
-    Iterable<FocusNode> descendants, {
-    FocusNode? currentNode,
-  }) {
+    Iterable<FocusNode> descendants,
+    FocusNode currentNode,
+  ) {
     final sorted = descendants.toList()
       ..sort((a, b) {
         final aRect = _getRect(a);
@@ -39,7 +40,7 @@ class TVFocusGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FocusTraversalGroup(
-      order: TVGridFocusTraversal(),
+      policy: TVGridFocusTraversal(),
       child: child,
     );
   }

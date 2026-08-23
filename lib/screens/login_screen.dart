@@ -1420,7 +1420,8 @@ class _LoginScreenState extends State<LoginScreen> {
 /// tvOS 登录表单纵向 Focus 导航策略
 /// 仅遍历外层 TVFocusableWidget 节点（排除 TextFormField 内部输入节点），
 /// 按从上到下的视觉顺序导航，确保方向键上下在字段间移动。
-class _LoginFocusTraversal extends FocusTraversalPolicy {
+class _LoginFocusTraversal extends FocusTraversalPolicy
+    with DirectionalFocusTraversalPolicyMixin {
   final List<FocusNode> primaryNodes;
 
   _LoginFocusTraversal(this.primaryNodes);
@@ -1437,9 +1438,9 @@ class _LoginFocusTraversal extends FocusTraversalPolicy {
 
   @override
   Iterable<FocusNode> sortDescendants(
-    Iterable<FocusNode> descendants, {
-    FocusNode? currentNode,
-  }) {
+    Iterable<FocusNode> descendants,
+    FocusNode currentNode,
+  ) {
     final sorted = _filtered(descendants).toList()
       ..sort((a, b) {
         final aRect = _rect(a);

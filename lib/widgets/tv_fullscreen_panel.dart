@@ -84,7 +84,6 @@ class TVFullscreenPanel extends StatelessWidget {
         focusNode: item.focusNode,
         enabled: item.enabled,
         autofocus: item.autofocus,
-        focusTraversalPolicy: item.focusTraversalPolicy,
         child: item.child,
       );
     }

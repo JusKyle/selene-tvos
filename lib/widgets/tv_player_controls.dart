@@ -222,7 +222,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
     }
   }
 
-  KeyEventResult _handleSpeedPanelKeyEvent(KeyDownEvent event) {
+  KeyEventResult _handleSpeedPanelKeyEvent(KeyEvent event) {
     switch (event.logicalKey) {
       case LogicalKeyboardKey.arrowLeft:
       case LogicalKeyboardKey.arrowUp:
@@ -295,11 +295,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls>
         child: Focus(
           focusNode: _rootFocusNode,
           autofocus: true,
-          onKeyEvent: (node, event) => _handleSpeedPanelKeyEvent(
-              event is KeyDownEvent ? event : KeyDownEvent(
-                event.key,
-                repeat: event is KeyDownEvent ? false : true,
-              )),
+          onKeyEvent: (node, event) => _handleSpeedPanelKeyEvent(event),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,

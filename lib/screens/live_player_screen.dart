@@ -256,18 +256,6 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
     }
   }
 
-  // 退出网页全屏
-  void _exitWebFullscreen() {
-    if (!DeviceUtils.isPC()) {
-      return;
-    }
-    // 通知播放器控件退出网页全屏
-    // 播放器控件会通过 onWebFullscreenChanged 回调来更新 _isWebFullscreen 状态
-    if (_videoPlayerController != null) {
-      _videoPlayerController!.exitWebFullscreen();
-    }
-  }
-
   /// 处理视频播放器 ready 事件
   void _onVideoPlayerReady() {
     if (mounted) {
@@ -2286,8 +2274,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
       isVisible: _isLoading,
       message: _loadingMessage,
       animationController: _loadingAnimationController,
-      onBackPressed:
-          _isWebFullscreen ? _exitWebFullscreen : () => Navigator.pop(context),
+      onBackPressed: () => Navigator.pop(context),
     );
   }
 }

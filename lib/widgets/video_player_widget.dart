@@ -104,7 +104,6 @@ class VideoPlayerWidgetController {
 
 class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   VideoPlayerController? _controller;
-  bool _isInitialized = false;
   bool _hasCompleted = false;
   bool _isLoadingVideo = false;
   bool _readyFired = false;
@@ -153,7 +152,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       await controller.play();
       if (!mounted || _controllerDisposed) return;
       setState(() {
-        _isInitialized = true;
         _isLoadingVideo = false;
       });
       _readyFired = true;
@@ -240,7 +238,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       await controller.play();
       if (mounted) {
         setState(() {
-          _isInitialized = true;
           _hasCompleted = false;
           _isLoadingVideo = false;
         });
