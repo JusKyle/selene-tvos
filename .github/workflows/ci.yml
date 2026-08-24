@@ -41,16 +41,16 @@ jobs:
         run: flutter-tvos build tvos --simulator
 
       # 在本机无需 Xcode 即可看效果：boot 一台 tvOS 模拟器，安装并启动 app，
-      # 截图后作为 artifact 上传，用户直接在 Actions 页面下载 PNG 查看 UI。
+      # 多时间点截图 + 进程存活检查 + 收集日志，作为 artifact 上传诊断。
       - name: Screenshot tvOS simulator
         run: |
           set -e
           APP=$(find build -name Runner.app -type d | head -1)
-          echo "App: $APP"
           BUNDLE_ID=$(plutil -extract CFBundleIdentifier raw "$APP/Info.plist")
-          echo "Bundle ID: $BUNDLE_ID"
           # 选一台可用的 Apple TV 模拟器
           TV_UDID=$(xcrun simctl list devices available | grep -i "Apple TV" | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' | head -1)
+          echo "App: $APP"
+          echo "Bundle ID: $BUNDLE_ID"
           echo "TV UDID: $TV_UDID"
           if [ -z "$TV_UDID" ]; then
             echo "::error::No tvOS simulator device available"
@@ -60,13 +60,28 @@ jobs:
           xcrun simctl bootstatus "$TV_UDID" -b
           xcrun simctl install "$TV_UDID" "$APP"
           xcrun simctl launch "$TV_UDID" "$BUNDLE_ID"
-          sleep 10
-          xcrun simctl io "$TV_UDID" screenshot /tmp/tvOS_home.png
-          echo "Screenshot saved: /tmp/tvOS_home.png"
+          mkdir -p /tmp/shots
+          # 10s / 30s / 60s 三张截图，判断首帧渲染时间
+          PREV=0
+          for T in 10 30 60; do
+            sleep $(( T - PREV ))
+            xcrun simctl io "$TV_UDID" screenshot "/tmp/shots/shot_${T}s.png" 2>/dev/null || echo "::warning::shot ${T}s failed"
+            PREV=$T
+          done
+          # 检查 app 进程是否存活（崩溃检测）
+          if xcrun simctl spawn "$TV_UDID" launchctl list 2>/dev/null | grep -q "$BUNDLE_ID"; then
+            echo "App process alive after 60s"
+          else
+            echo "::warning::App process NOT found after 60s (likely crashed)"
+          fi
+          # 收集最近 2 分钟 app 相关日志，辅助排查空白/崩溃
+          xcrun simctl spawn "$TV_UDID" log show --last 2m --style compact 2>/dev/null \
+            | grep -iE "Runner|flutter|crash|exception|fatal" | head -80 > /tmp/shots/app_log.txt || true
+          echo "Log lines: $(wc -l < /tmp/shots/app_log.txt 2>/dev/null || echo 0)"
 
       - name: Upload tvOS screenshots
         uses: actions/upload-artifact@v4
         with:
           name: tvos-simulator-screenshot
-          path: /tmp/tvOS_home.png
+          path: /tmp/shots
           if-no-files-found: error
