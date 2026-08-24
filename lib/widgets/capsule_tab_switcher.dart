@@ -238,19 +238,6 @@ class _CapsuleTabHover extends StatefulWidget {
 }
 
 class _CapsuleTabHoverState extends State<_CapsuleTabHover> {
-  bool get _isSelected {
-    // 判断当前tab是否被选中
-    if (widget.index == widget.selectedIndex) {
-      return true;
-    }
-    // 如果正在动画中，oldIndex也算部分选中
-    if (widget.animationController.isAnimating &&
-        widget.index == widget.oldIndex) {
-      return true;
-    }
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

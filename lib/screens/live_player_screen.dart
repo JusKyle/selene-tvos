@@ -36,7 +36,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
   bool _isLoadingEpg = false;
   int _epgLoadGeneration = 0; // 防止快速切台时旧 EPG 覆盖新频道
   List<LiveChannel> _allChannels = [];
-  String _selectedGroup = '全部';
+  final String _selectedGroup = '全部';
 
   // 播放器的 GlobalKey
   final GlobalKey _playerKey = GlobalKey();

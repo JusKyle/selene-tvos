@@ -7,7 +7,6 @@ import '../services/page_cache_service.dart';
 import '../services/theme_service.dart';
 import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
-import '../core/platform_detector.dart';
 import 'video_card.dart';
 import 'video_menu_bottom_sheet.dart';
 import 'tv_focus_grid.dart';

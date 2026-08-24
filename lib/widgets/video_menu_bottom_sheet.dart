@@ -162,7 +162,6 @@ class _VideoMenuBottomSheetState extends State<VideoMenuBottomSheet>
   double? _contentBasedMaxHeight;
   bool _hasInitialHeightCaptured = false;
   // 下拉关闭相关阈值
-  final double _dismissDragThreshold = 24.0; // 超过初始高度24px继续下拉则关闭
   final double _dismissVelocityThreshold = 800.0; // 快速下滑关闭的速度阈值
 
   @override

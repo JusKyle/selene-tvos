@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class PlatformDetector {
   static bool _isTVOS = false;
 

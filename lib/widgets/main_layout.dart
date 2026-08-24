@@ -430,7 +430,7 @@ body: _buildBody(context, themeService),
               child: Container(
                 width: 32,
                 height: 32,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.transparent,
                 ),
@@ -548,8 +548,8 @@ body: _buildBody(context, themeService),
                                 : null,
                         behavior: HitTestBehavior.opaque,
                         child: Container(
-                          padding: EdgeInsets.all(6),
-                          decoration: BoxDecoration(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
                             shape: BoxShape.circle,
                             color: Colors.transparent,
                           ),
@@ -581,8 +581,8 @@ body: _buildBody(context, themeService),
                           },
                           behavior: HitTestBehavior.opaque,
                           child: Container(
-                            padding: EdgeInsets.all(6),
-                            decoration: BoxDecoration(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.transparent,
                             ),
@@ -647,7 +647,7 @@ body: _buildBody(context, themeService),
               child: Container(
                 width: 32,
                 height: 32,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.transparent,
                 ),
@@ -694,7 +694,7 @@ body: _buildBody(context, themeService),
             child: Container(
               width: 32,
               height: 32,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.transparent,
               ),
@@ -735,7 +735,7 @@ body: _buildBody(context, themeService),
             child: Container(
               width: 32,
               height: 32,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.transparent,
               ),

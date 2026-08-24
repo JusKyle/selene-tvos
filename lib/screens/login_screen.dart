@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:async';
 import '../services/user_data_service.dart';
 import '../services/local_mode_storage_service.dart';
 import '../services/subscription_service.dart';
@@ -23,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _subscriptionUrlController = TextEditingController();
-  bool _isPasswordVisible = false;
 
   // tvOS Focus 导航节点（外层高亮包裹，内层为文本输入）
   final _urlTvNode = FocusNode(debugLabel: 'url_tv');
@@ -39,10 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isFormValid = false;
   bool _isLocalMode = false;
-
-  // 点击计数器相关
-  int _logoTapCount = 0;
-  Timer? _tapTimer;
 
   @override
   void initState() {
@@ -105,36 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _usernameFieldNode.dispose();
     _passwordFieldNode.dispose();
     _subscriptionUrlFieldNode.dispose();
-    _tapTimer?.cancel();
     super.dispose();
-  }
-
-  void _handleLogoTap() {
-    _logoTapCount++;
-
-    // 取消之前的计时器
-    _tapTimer?.cancel();
-
-    // 如果达到10次，切换到本地模式
-    if (_logoTapCount >= 10) {
-      setState(() {
-        _isLocalMode = !_isLocalMode;
-        _validateForm();
-        _logoTapCount = 0;
-      });
-      _showToast(
-        _isLocalMode ? '已切换到本地模式' : '已切换到服务器模式',
-        const Color(0xFF27ae60),
-      );
-    } else {
-      // 设置新的计时器，2秒后重置计数
-      _tapTimer = Timer(const Duration(seconds: 1), () {
-        if (!mounted) return;
-        setState(() {
-          _logoTapCount = 0;
-        });
-      });
-    }
   }
 
   // tvOS 本地模式开关切换
@@ -170,119 +135,6 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       _handleLogin();
     }
-  }
-
-  Widget _buildLocalModeForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // 订阅链接输入框
-        TextFormField(
-          controller: _subscriptionUrlController,
-          style: FontUtils.poppins(
-            fontSize: 16,
-            color: const Color(0xFF2c3e50),
-          ),
-          decoration: InputDecoration(
-            labelText: '订阅链接',
-            labelStyle: FontUtils.poppins(
-              color: const Color(0xFF7f8c8d),
-              fontSize: 14,
-            ),
-            hintText: '请输入订阅链接',
-            hintStyle: FontUtils.poppins(
-              color: const Color(0xFFbdc3c7),
-              fontSize: 16,
-            ),
-            prefixIcon: const Icon(
-              Icons.link,
-              color: Color(0xFF7f8c8d),
-              size: 20,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.6),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 18,
-            ),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return '请输入订阅链接';
-            }
-            return null;
-          },
-          onChanged: (value) => _validateForm(),
-          onFieldSubmitted: (_) => _handleSubmit(),
-        ),
-        const SizedBox(height: 32),
-
-        // 登录按钮
-        ElevatedButton(
-          onPressed:
-              (_isLoading || !_isFormValid) ? null : _handleLocalModeLogin,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _isFormValid && !_isLoading
-                ? const Color(0xFF2c3e50)
-                : const Color(0xFFbdc3c7),
-            foregroundColor: _isFormValid && !_isLoading
-                ? Colors.white
-                : const Color(0xFF7f8c8d),
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 0,
-            shadowColor: Colors.transparent,
-          ),
-          child: _isLoading
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '登录中...',
-                      style: FontUtils.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                )
-              : Text(
-                  '登录',
-                  style: FontUtils.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-        ),
-      ],
-    );
   }
 
   String _processUrl(String url) {
