@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../core/platform_detector.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../services/page_cache_service.dart';
@@ -16,11 +15,9 @@ import '../widgets/tv_fullscreen_panel.dart';
 import '../widgets/favorites_grid.dart';
 import '../widgets/search_result_agg_grid.dart';
 import '../widgets/search_results_grid.dart';
-import '../widgets/filter_options_selector.dart';
 import '../widgets/filter_pill_hover.dart';
 import '../widgets/main_layout.dart';
 import '../utils/font_utils.dart';
-import '../utils/device_utils.dart';
 import 'player_screen.dart';
 
 enum SortOrder { none, asc, desc }
@@ -59,13 +56,6 @@ class _SearchScreenState extends State<SearchScreen>
   String? _deletingHistoryItem;
   AnimationController? _deleteAnimationController;
   Animation<double>? _deleteAnimation;
-
-  // hover 状态
-  String? _hoveredHistoryItem;
-  String? _hoveredDeleteButton;
-  String? _hoveredFilterPill;
-  bool _isYearSortHovered = false;
-  bool _isClearHistoryButtonHovered = false;
 
   late SSESearchService _searchService;
   StreamSubscription<List<SearchResult>>? _incrementalResultsSubscription;
@@ -303,187 +293,69 @@ class _SearchScreenState extends State<SearchScreen>
   /// 显示清空确认弹窗
   void _showClearConfirmation() {
     // tvOS 使用全屏面板替代 showDialog
-    if (PlatformDetector.isTVOS) {
-      TVFullscreenPanel.show<void>(
-        context,
-        title: '清空搜索历史',
-        items: [
-          TVFocusableWidget(
-            onTap: () {
-              Navigator.of(context).pop();
-              _clearSearchHistory();
-            },
-            child: Container(
-              width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFe74c3c),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.delete_outline,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '确认清空',
-                    style: FontUtils.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
+    TVFullscreenPanel.show<void>(
+      context,
+      title: '清空搜索历史',
+      items: [
+        TVFocusableWidget(
+          onTap: () {
+            Navigator.of(context).pop();
+            _clearSearchHistory();
+          },
+          child: Container(
+            width: double.infinity,
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFe74c3c),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ),
-          TVFocusableWidget(
-            onTap: () {
-              Navigator.of(context).pop();
-            },
-            child: Container(
-              width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF444444),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  '取消',
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.delete_outline,
+                  color: Colors.white,
+                  size: 22,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '确认清空',
                   style: FontUtils.poppins(
                     fontSize: 18,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        TVFocusableWidget(
+          onTap: () {
+            Navigator.of(context).pop();
+          },
+          child: Container(
+            width: double.infinity,
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF444444),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                '取消',
+                style: FontUtils.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
                 ),
               ),
             ),
           ),
-        ],
-      );
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Consumer<ThemeService>(
-          builder: (context, themeService, child) {
-            return AlertDialog(
-              backgroundColor: themeService.isDarkMode
-                  ? const Color(0xFF1e1e1e)
-                  : Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              contentPadding: const EdgeInsets.all(24),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 图标
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFe74c3c).withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.delete_outline,
-                      color: Color(0xFFe74c3c),
-                      size: 32,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // 标题
-                  Text(
-                    '清空搜索历史',
-                    style: FontUtils.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: themeService.isDarkMode
-                          ? const Color(0xFFffffff)
-                          : const Color(0xFF2c3e50),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // 描述
-                  Text(
-                    '确定要清空所有搜索历史吗？此操作无法撤销。',
-                    style: FontUtils.poppins(
-                      fontSize: 14,
-                      color: themeService.isDarkMode
-                          ? const Color(0xFFb0b0b0)
-                          : const Color(0xFF7f8c8d),
-                      height: 1.4,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  // 按钮
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            '取消',
-                            style: FontUtils.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: themeService.isDarkMode
-                                  ? const Color(0xFFb0b0b0)
-                                  : const Color(0xFF7f8c8d),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            _clearSearchHistory();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFe74c3c),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            '清空',
-                            style: FontUtils.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+        ),
+      ],
     );
   }
 
@@ -621,13 +493,8 @@ class _SearchScreenState extends State<SearchScreen>
                       child: _buildSearchError(themeService),
                     ),
                   // 搜索历史（只有在从未搜索过时显示）
-                  // tvOS 不包裹 SingleChildScrollView，由 _buildTVSearchHistory 内部提供滚动
                   Expanded(
-                    child: PlatformDetector.isTVOS
-                        ? _buildSearchHistory(themeService)
-                        : SingleChildScrollView(
-                            child: _buildSearchHistory(themeService),
-                          ),
+                    child: _buildSearchHistory(themeService),
                   ),
                 ],
                 if (_hasSearched) ...[
@@ -675,14 +542,7 @@ class _SearchScreenState extends State<SearchScreen>
             Navigator.pop(context);
           },
         );
-        if (PlatformDetector.isIOS) {
-          return PopScope(
-            canPop: true, // 允许返回
-            child: ml,
-          );
-        } else {
-          return ml;
-        }
+        return ml;
       },
     );
   }
@@ -731,276 +591,7 @@ class _SearchScreenState extends State<SearchScreen>
     }
 
     // tvOS 使用纵向 Focus 列表，长按删除改为 Menu 键删除
-    if (PlatformDetector.isTVOS) {
-      return _buildTVSearchHistory(themeService);
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.only(left: 22.0, right: 16.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline, // 基线对齐
-            textBaseline: TextBaseline.alphabetic, // 使用字母基线
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '搜索历史',
-                style: FontUtils.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: themeService.isDarkMode
-                      ? const Color(0xFFffffff)
-                      : const Color(0xFF2c3e50),
-                ),
-              ),
-              MouseRegion(
-                cursor: DeviceUtils.isPC()
-                    ? SystemMouseCursors.click
-                    : MouseCursor.defer,
-                onEnter: DeviceUtils.isPC()
-                    ? (_) {
-                        setState(() {
-                          _isClearHistoryButtonHovered = true;
-                        });
-                      }
-                    : null,
-                onExit: DeviceUtils.isPC()
-                    ? (_) {
-                        setState(() {
-                          _isClearHistoryButtonHovered = false;
-                        });
-                      }
-                    : null,
-                child: TextButton(
-                  onPressed: _showClearConfirmation,
-                  style: TextButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    overlayColor: Colors.transparent,
-                  ),
-                  child: Text(
-                    '清空',
-                    style: FontUtils.poppins(
-                      fontSize: 14,
-                      color: DeviceUtils.isPC() && _isClearHistoryButtonHovered
-                          ? const Color(0xFFe74c3c) // hover 时红色
-                          : themeService.isDarkMode
-                              ? const Color(0xFFb0b0b0)
-                              : const Color(0xFF7f8c8d),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _searchHistory.map((history) {
-              final isDeleting = _deletingHistoryItem == history;
-              final isHovered = _hoveredHistoryItem == history;
-
-              return MouseRegion(
-                cursor: DeviceUtils.isPC()
-                    ? SystemMouseCursors.click
-                    : MouseCursor.defer,
-                onEnter: DeviceUtils.isPC()
-                    ? (_) {
-                        setState(() {
-                          _hoveredHistoryItem = history;
-                        });
-                      }
-                    : null,
-                onExit: DeviceUtils.isPC()
-                    ? (_) {
-                        // 只有当前 hover 的是这个历史项时才清除
-                        if (_hoveredHistoryItem == history) {
-                          setState(() {
-                            _hoveredHistoryItem = null;
-                          });
-                        }
-                      }
-                    : null,
-                child: GestureDetector(
-                  onTap: () {
-                    if (!isDeleting) {
-                      _searchController.text = history;
-                      setState(() {
-                        _searchQuery = history;
-                      });
-                      _performSearch(history);
-                    }
-                  },
-                  onLongPressStart: (_) {
-                    if (!isDeleting) {
-                      _startDeleteAnimation(history);
-                    }
-                  },
-                  onLongPressEnd: (_) {
-                    if (isDeleting) {
-                      _cancelDeleteAnimation();
-                    }
-                  },
-                  child: AnimatedBuilder(
-                    animation:
-                        _deleteAnimation ?? const AlwaysStoppedAnimation(0.0),
-                    builder: (context, child) {
-                      // 计算颜色插值
-                      Color backgroundColor;
-                      Color textColor;
-                      Color borderColor;
-
-                      if (isDeleting) {
-                        final animationValue = _deleteAnimation?.value ?? 0.0;
-
-                        // 背景色从正常色渐变到红色
-                        backgroundColor = Color.lerp(
-                          themeService.isDarkMode
-                              ? const Color(0xFF1e1e1e)
-                              : Colors.white,
-                          const Color(0xFFe74c3c).withValues(alpha: 0.2),
-                          animationValue,
-                        )!;
-
-                        // 文字色从正常色渐变到红色
-                        textColor = Color.lerp(
-                          themeService.isDarkMode
-                              ? const Color(0xFFffffff)
-                              : const Color(0xFF2c3e50),
-                          const Color(0xFFe74c3c),
-                          animationValue,
-                        )!;
-
-                        // 边框色从正常色渐变到红色
-                        borderColor = Color.lerp(
-                          themeService.isDarkMode
-                              ? const Color(0xFF333333)
-                              : const Color(0xFFe9ecef),
-                          const Color(0xFFe74c3c),
-                          animationValue,
-                        )!;
-                      } else if (DeviceUtils.isPC() && isHovered) {
-                        // PC 端 hover 效果 - 浅绿色
-                        backgroundColor = themeService.isDarkMode
-                            ? const Color(0xFF1e3a28) // 深色模式下的深绿背景
-                            : const Color(0xFFe8f5e9); // 浅色模式下的浅绿背景
-                        textColor = const Color(0xFF27ae60); // 绿色文字
-                        borderColor = const Color(0xFF52c77a); // 浅绿边框
-                      } else {
-                        backgroundColor = themeService.isDarkMode
-                            ? const Color(0xFF1e1e1e)
-                            : Colors.white;
-                        textColor = themeService.isDarkMode
-                            ? const Color(0xFFffffff)
-                            : const Color(0xFF2c3e50);
-                        borderColor = themeService.isDarkMode
-                            ? const Color(0xFF333333)
-                            : const Color(0xFFe9ecef);
-                      }
-
-                      return Stack(
-                        clipBehavior: Clip.none, // 允许子组件超出边界
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: backgroundColor,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: borderColor,
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  history,
-                                  style: FontUtils.poppins(
-                                    fontSize: 14,
-                                    color: textColor,
-                                  ),
-                                ),
-                                if (isDeleting) ...[
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.delete_outline,
-                                    size: 16,
-                                    color: textColor,
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          // PC 端 hover 时显示的删除按钮
-                          if (DeviceUtils.isPC() && isHovered && !isDeleting)
-                            Positioned(
-                              top: -6,
-                              right: -6,
-                              child: MouseRegion(
-                                cursor: SystemMouseCursors.click,
-                                onEnter: (_) {
-                                  setState(() {
-                                    _hoveredDeleteButton = history;
-                                  });
-                                },
-                                onExit: (_) {
-                                  setState(() {
-                                    _hoveredDeleteButton = null;
-                                  });
-                                },
-                                child: GestureDetector(
-                                  onTap: () {
-                                    _deleteSearchHistory(history);
-                                  },
-                                  child: Container(
-                                    width: 18,
-                                    height: 18,
-                                    decoration: BoxDecoration(
-                                      color: _hoveredDeleteButton == history
-                                          ? const Color(0xFFe74c3c) // hover 时红色
-                                          : const Color(0xFF95a5a6), // 默认灰色
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.2),
-                                          blurRadius: 2,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.close,
-                                      size: 12,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
+    return _buildTVSearchHistory(themeService);
   }
 
   /// tvOS 搜索历史：纵向 Focus 列表，Select 搜索，Menu 键删除
@@ -1267,20 +858,12 @@ class _SearchScreenState extends State<SearchScreen>
                         ),
                       );
                       // tvOS 上聚合开关需要可 Focus
-                      if (PlatformDetector.isTVOS) {
-                        return TVFocusableWidget(
-                          onTap: () {
-                            setState(() {
-                              _useAggregatedView = !_useAggregatedView;
-                            });
-                          },
-                          child: switchWidget,
-                        );
-                      }
-                      return MouseRegion(
-                        cursor: DeviceUtils.isPC()
-                            ? SystemMouseCursors.click
-                            : MouseCursor.defer,
+                      return TVFocusableWidget(
+                        onTap: () {
+                          setState(() {
+                            _useAggregatedView = !_useAggregatedView;
+                          });
+                        },
                         child: switchWidget,
                       );
                     }),
@@ -1676,33 +1259,7 @@ class _SearchScreenState extends State<SearchScreen>
 
   Widget _buildFilterSection(ThemeService themeService) {
     // tvOS 使用 Focus 包裹的筛选控件
-    if (PlatformDetector.isTVOS) {
-      return _buildTVFilterSection(themeService);
-    }
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start, // 靠左对齐
-        children: [
-          _buildFilterPill('来源', _sourceOptions, _selectedSource, (newValue) {
-            setState(() {
-              _selectedSource = newValue;
-            });
-          }, isFirst: true),
-          _buildFilterPill('标题', _titleOptions, _selectedTitle, (newValue) {
-            setState(() {
-              _selectedTitle = newValue;
-            });
-          }),
-          _buildFilterPill('年份', _yearOptions, _selectedYear, (newValue) {
-            setState(() {
-              _selectedYear = newValue;
-            });
-          }),
-          _buildYearSortButton(),
-        ],
-      ),
-    );
+    return _buildTVFilterSection(themeService);
   }
 
   /// tvOS 筛选器：全部控件用 TVFocusableWidget 包裹，确保 Focus 导航
@@ -1833,68 +1390,6 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
-  Widget _buildFilterPill(String title, List<SelectorOption> options,
-      String selectedValue, ValueChanged<String> onSelected,
-      {bool isFirst = false}) {
-    bool isDefault = selectedValue == 'all';
-    bool isHovered = _hoveredFilterPill == title;
-
-    return MouseRegion(
-      cursor: DeviceUtils.isPC() ? SystemMouseCursors.click : MouseCursor.defer,
-      onEnter: DeviceUtils.isPC()
-          ? (_) {
-              setState(() {
-                _hoveredFilterPill = title;
-              });
-            }
-          : null,
-      onExit: DeviceUtils.isPC()
-          ? (_) {
-              setState(() {
-                _hoveredFilterPill = null;
-              });
-            }
-          : null,
-      child: GestureDetector(
-        onTap: () {
-          _showFilterOptions(
-              context, title, options, selectedValue, onSelected);
-        },
-        child: Container(
-          padding: EdgeInsets.fromLTRB(isFirst ? 0 : 8, 6, 8, 6),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              Text(
-                title, // 始终显示原始标题，不显示选中内容
-                style: FontUtils.poppins(
-                  fontSize: 13,
-                  color: (DeviceUtils.isPC() && isHovered) || !isDefault
-                      ? const Color(0xFF27AE60)
-                      : Theme.of(context).textTheme.bodySmall?.color,
-                  fontWeight: (DeviceUtils.isPC() && isHovered) || !isDefault
-                      ? FontWeight.w500
-                      : FontWeight.normal,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.arrow_drop_down,
-                size: 18,
-                color: (DeviceUtils.isPC() && isHovered) || !isDefault
-                    ? const Color(0xFF27AE60)
-                    : Theme.of(context).textTheme.bodySmall?.color,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   void _showFilterOptions(
       BuildContext context,
       String title,
@@ -1902,116 +1397,7 @@ class _SearchScreenState extends State<SearchScreen>
       String selectedValue,
       ValueChanged<String> onSelected) {
     // tvOS 使用全屏面板替代底部弹出/对话框
-    if (PlatformDetector.isTVOS) {
-      _showTVFilterOptions(context, title, options, selectedValue, onSelected);
-      return;
-    }
-    if (DeviceUtils.isPC()) {
-      // PC端使用 filter_options_selector.dart 中的 PC 组件
-      showFilterOptionsSelector(
-        context: context,
-        title: title,
-        options: options,
-        selectedValue: selectedValue,
-        onSelected: onSelected,
-        useCompactLayout: title == '标题', // 只有标题筛选使用紧凑布局
-      );
-    } else {
-      // 移动端显示底部弹出
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        builder: (context) {
-          final screenWidth = MediaQuery.of(context).size.width;
-          final modalWidth =
-              DeviceUtils.isTablet(context) ? screenWidth * 0.5 : screenWidth;
-          const horizontalPadding = 16.0;
-          const spacing = 10.0;
-          final itemWidth =
-              (modalWidth - horizontalPadding * 2 - spacing * 2) / 3;
-
-          return Container(
-            width: DeviceUtils.isTablet(context)
-                ? modalWidth
-                : double.infinity, // 设置宽度为100%
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start, // 左对齐
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Center(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                ),
-                Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.6,
-                    minHeight: 200.0,
-                  ),
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: horizontalPadding, vertical: 8),
-                      child: Wrap(
-                        alignment: WrapAlignment.start, // 左对齐
-                        spacing: spacing,
-                        runSpacing: spacing,
-                        children: options.map((option) {
-                          final isSelected = option.value == selectedValue;
-                          return SizedBox(
-                            width: itemWidth,
-                            child: InkWell(
-                              onTap: () {
-                                onSelected(option.value);
-                                Navigator.pop(context);
-                              },
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
-                                alignment: Alignment.centerLeft, // 内容左对齐
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(0xFF27AE60)
-                                      : Theme.of(context)
-                                          .chipTheme
-                                          .backgroundColor,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  option.label,
-                                  textAlign: TextAlign.left, // 文字左对齐
-                                  style: TextStyle(
-                                    color: isSelected ? Colors.white : null,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          );
-        },
-      );
-    }
+    _showTVFilterOptions(context, title, options, selectedValue, onSelected);
   }
 
   /// tvOS 筛选选项：使用全屏面板展示
@@ -2076,88 +1462,4 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
-  Widget _buildYearSortButton() {
-    IconData icon;
-    String text;
-    switch (_yearSortOrder) {
-      case SortOrder.desc:
-        icon = LucideIcons.arrowDown10;
-        text = '年份';
-        break;
-      case SortOrder.asc:
-        icon = LucideIcons.arrowUp10;
-        text = '年份';
-        break;
-      case SortOrder.none:
-        icon = LucideIcons.arrowDownUp;
-        text = '年份';
-        break;
-    }
-
-    bool isDefault = _yearSortOrder == SortOrder.none;
-
-    return MouseRegion(
-      cursor: DeviceUtils.isPC() ? SystemMouseCursors.click : MouseCursor.defer,
-      onEnter: DeviceUtils.isPC()
-          ? (_) {
-              setState(() {
-                _isYearSortHovered = true;
-              });
-            }
-          : null,
-      onExit: DeviceUtils.isPC()
-          ? (_) {
-              setState(() {
-                _isYearSortHovered = false;
-              });
-            }
-          : null,
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            if (_yearSortOrder == SortOrder.none) {
-              _yearSortOrder = SortOrder.desc;
-            } else if (_yearSortOrder == SortOrder.desc) {
-              _yearSortOrder = SortOrder.asc;
-            } else {
-              _yearSortOrder = SortOrder.none;
-            }
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              Text(
-                text,
-                style: FontUtils.poppins(
-                  fontSize: 13,
-                  color:
-                      (DeviceUtils.isPC() && _isYearSortHovered) || !isDefault
-                          ? const Color(0xFF27AE60)
-                          : Theme.of(context).textTheme.bodySmall?.color,
-                  fontWeight:
-                      (DeviceUtils.isPC() && _isYearSortHovered) || !isDefault
-                          ? FontWeight.w500
-                          : FontWeight.normal,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                icon,
-                size: 16,
-                color: (DeviceUtils.isPC() && _isYearSortHovered) || !isDefault
-                    ? const Color(0xFF27AE60)
-                    : Theme.of(context).textTheme.bodySmall?.color,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

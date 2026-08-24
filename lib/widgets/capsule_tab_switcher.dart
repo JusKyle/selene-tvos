@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/theme_service.dart';
-import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
 
 class CapsuleTabSwitcher extends StatefulWidget {
@@ -196,7 +195,6 @@ class _CapsuleTabSwitcherState extends State<CapsuleTabSwitcher>
 
   Widget _buildTabButton(String label, int index, ThemeService themeService) {
     return _CapsuleTabHover(
-      isPC: DeviceUtils.isPC(),
       label: label,
       index: index,
       selectedIndex: _selectedIndex,
@@ -215,7 +213,6 @@ class _CapsuleTabSwitcherState extends State<CapsuleTabSwitcher>
 
 // Hover widget for CapsuleTab on PC
 class _CapsuleTabHover extends StatefulWidget {
-  final bool isPC;
   final String label;
   final int index;
   final int selectedIndex;
@@ -226,7 +223,6 @@ class _CapsuleTabHover extends StatefulWidget {
   final VoidCallback onTap;
 
   const _CapsuleTabHover({
-    required this.isPC,
     required this.label,
     required this.index,
     required this.selectedIndex,
@@ -242,8 +238,6 @@ class _CapsuleTabHover extends StatefulWidget {
 }
 
 class _CapsuleTabHoverState extends State<_CapsuleTabHover> {
-  bool _isHovered = false;
-
   bool get _isSelected {
     // 判断当前tab是否被选中
     if (widget.index == widget.selectedIndex) {
@@ -259,64 +253,56 @@ class _CapsuleTabHoverState extends State<_CapsuleTabHover> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: _isSelected ? SystemMouseCursors.basic : SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Center(
-          child: AnimatedBuilder(
-            animation: widget.progressAnimation,
-            builder: (context, child) {
-              double progress = 0.0;
-              if (widget.index == widget.selectedIndex) {
-                progress = widget.animationController.isAnimating
-                    ? widget.progressAnimation.value
-                    : 1.0;
-              } else if (widget.index == widget.oldIndex) {
-                progress = widget.animationController.isAnimating
-                    ? 1.0 - widget.progressAnimation.value
-                    : 0.0;
-              }
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Center(
+        child: AnimatedBuilder(
+          animation: widget.progressAnimation,
+          builder: (context, child) {
+            double progress = 0.0;
+            if (widget.index == widget.selectedIndex) {
+              progress = widget.animationController.isAnimating
+                  ? widget.progressAnimation.value
+                  : 1.0;
+            } else if (widget.index == widget.oldIndex) {
+              progress = widget.animationController.isAnimating
+                  ? 1.0 - widget.progressAnimation.value
+                  : 0.0;
+            }
 
-              // 判断是否选中
-              final isSelected = progress > 0.0;
+            // 判断是否选中
+            final isSelected = progress > 0.0;
 
-              Color color;
-              if (isSelected) {
-                // 选中状态：使用原来的颜色插值逻辑
-                color = Color.lerp(
-                  widget.themeService.isDarkMode
-                      ? const Color(0xFFb0b0b0)
-                      : const Color(0xFF7f8c8d),
-                  widget.themeService.isDarkMode ? Colors.white : Colors.black,
-                  progress,
-                )!;
-              } else if (widget.isPC && _isHovered) {
-                // PC上未选中且hover：显示绿色
-                color = const Color(0xFF27AE60);
-              } else {
-                // 未选中且未hover：默认颜色
-                color = widget.themeService.isDarkMode
+            Color color;
+            if (isSelected) {
+              // 选中状态：使用原来的颜色插值逻辑
+              color = Color.lerp(
+                widget.themeService.isDarkMode
                     ? const Color(0xFFb0b0b0)
-                    : const Color(0xFF7f8c8d);
-              }
+                    : const Color(0xFF7f8c8d),
+                widget.themeService.isDarkMode ? Colors.white : Colors.black,
+                progress,
+              )!;
+            } else {
+              // 未选中且未hover：默认颜色
+              color = widget.themeService.isDarkMode
+                  ? const Color(0xFFb0b0b0)
+                  : const Color(0xFF7f8c8d);
+            }
 
-              final fontWeight =
-                  progress > 0.5 ? FontWeight.w600 : FontWeight.w400;
+            final fontWeight =
+                progress > 0.5 ? FontWeight.w600 : FontWeight.w400;
 
-              return Text(
-                widget.label,
-                style: FontUtils.poppins(
-                  fontSize: 12,
-                  fontWeight: fontWeight,
-                  color: color,
-                ),
-              );
-            },
-          ),
+            return Text(
+              widget.label,
+              style: FontUtils.poppins(
+                fontSize: 12,
+                fontWeight: fontWeight,
+                color: color,
+              ),
+            );
+          },
         ),
       ),
     );

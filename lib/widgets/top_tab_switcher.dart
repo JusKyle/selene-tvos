@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/theme_service.dart';
-import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
-import '../core/platform_detector.dart';
 import 'tv_focusable.dart';
 
 class TopTabSwitcher extends StatefulWidget {
@@ -24,11 +22,6 @@ class _TopTabSwitcherState extends State<TopTabSwitcher>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
-
-  // 用于跟踪鼠标悬停状态
-  bool _isHoveringHome = false;
-  bool _isHoveringHistory = false;
-  bool _isHoveringFavorites = false;
 
   @override
   void initState() {
@@ -164,52 +157,9 @@ class _TopTabSwitcherState extends State<TopTabSwitcher>
   /// 构建标签按钮
   Widget _buildTabButton(
       String label, bool isSelected, int index, ThemeService themeService) {
-    final bool isPC = DeviceUtils.isPC();
-    final bool isHovering = label == '首页'
-        ? _isHoveringHome
-        : label == '播放历史'
-            ? _isHoveringHistory
-            : _isHoveringFavorites;
-
     final Widget button = SizedBox(
       height: 32,
-      child: MouseRegion(
-        cursor: isPC ? SystemMouseCursors.click : MouseCursor.defer,
-        onEnter: isPC
-            ? (_) {
-                setState(() {
-                  if (label == '首页') {
-                    _isHoveringHome = true;
-                  } else if (label == '播放历史') {
-                    _isHoveringHistory = true;
-                  } else {
-                    _isHoveringFavorites = true;
-                  }
-                });
-              }
-            : null,
-        onExit: isPC
-            ? (_) {
-                setState(() {
-                  if (label == '首页') {
-                    _isHoveringHome = false;
-                  } else if (label == '播放历史') {
-                    _isHoveringHistory = false;
-                  } else {
-                    _isHoveringFavorites = false;
-                  }
-                });
-              }
-            : null,
-        child: GestureDetector(
-          onTap: PlatformDetector.isTVOS
-              ? null // tvOS 由外层 TVFocusableWidget 处理 Select 按键
-              : () {
-                  // 防止动画进行中的重复点击
-                  if (!_animationController.isAnimating) {
-                    widget.onTabChanged(label);
-                  }
-                },
+      child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           child: AnimatedBuilder(
             animation: _animation,
@@ -261,11 +211,6 @@ class _TopTabSwitcherState extends State<TopTabSwitcher>
                 fontWeight = progress > 0.5 ? FontWeight.w600 : FontWeight.w400;
               }
 
-              // PC端悬停时文字变绿色
-              if (isPC && isHovering) {
-                textColor = const Color(0xFF27AE60);
-              }
-
               return Center(
                 child: Text(
                   label,
@@ -278,23 +223,18 @@ class _TopTabSwitcherState extends State<TopTabSwitcher>
               );
             },
           ),
-        ),
       ),
     );
 
-    // tvOS 平台使用 Focus 高亮组件包裹，支持遥控器方向键导航
-    if (PlatformDetector.isTVOS) {
-      return TVFocusableWidget(
-        onTap: () {
-          // 防止动画进行中的重复点击
-          if (!_animationController.isAnimating) {
-            widget.onTabChanged(label);
-          }
-        },
-        scale: 1.08,
-        child: button,
-      );
-    }
-    return button;
+    return TVFocusableWidget(
+      onTap: () {
+        // 防止动画进行中的重复点击
+        if (!_animationController.isAnimating) {
+          widget.onTabChanged(label);
+        }
+      },
+      scale: 1.08,
+      child: button,
+    );
   }
 }

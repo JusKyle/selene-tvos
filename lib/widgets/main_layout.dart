@@ -10,7 +10,6 @@ import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
 import 'user_menu.dart';
 import 'dart:async';
-import '../core/platform_detector.dart';
 import 'tv_focusable.dart';
 import 'tv_focus_grid.dart';
 
@@ -59,27 +58,6 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   bool _isSearchButtonPressed = false;
   bool _showUserMenu = false;
-
-  // 用于跟踪底部导航栏按钮的 hover 状态
-  int? _hoveredNavIndex;
-
-  // 用于跟踪搜索按钮的 hover 状态
-  bool _isSearchButtonHovered = false;
-
-  // 用于跟踪主题切换按钮的 hover 状态
-  bool _isThemeButtonHovered = false;
-
-  // 用于跟踪用户按钮的 hover 状态
-  bool _isUserButtonHovered = false;
-
-  // 用于跟踪返回按钮的 hover 状态
-  bool _isBackButtonHovered = false;
-
-  // 用于跟踪搜索框内清除按钮的 hover 状态
-  bool _isClearButtonHovered = false;
-
-  // 用于跟踪搜索框内搜索按钮的 hover 状态
-  bool _isSearchSubmitButtonHovered = false;
 
   // 搜索建议相关状态
   List<String> _searchSuggestions = [];
@@ -250,17 +228,7 @@ class _MainLayoutState extends State<MainLayout> {
       itemBuilder: (context, index) {
         final suggestion = _searchSuggestions[index];
         final row = _buildSuggestionRow(themeService, suggestion);
-        if (PlatformDetector.isTVOS) {
-          return TVFocusableWidget(
-            onTap: () {
-              widget.searchController?.text = suggestion;
-              widget.onSearchSubmitted?.call(suggestion);
-              _removeOverlay();
-            },
-            child: row,
-          );
-        }
-        return InkWell(
+        return TVFocusableWidget(
           onTap: () {
             widget.searchController?.text = suggestion;
             widget.onSearchSubmitted?.call(suggestion);
@@ -271,10 +239,7 @@ class _MainLayoutState extends State<MainLayout> {
       },
     );
 
-    if (PlatformDetector.isTVOS) {
-      return TVFocusGrid(child: listView);
-    }
-    return listView;
+    return TVFocusGrid(child: listView);
   }
 
   /// 构建单个搜索建议行内容
@@ -381,15 +346,11 @@ body: _buildBody(context, themeService),
     );
 
     // tvOS 平台包裹全局 Focus 按键处理
-    if (PlatformDetector.isTVOS) {
-      return Focus(
-        autofocus: true,
-        onKeyEvent: _handleGlobalKey,
-        child: scaffoldBody,
-      );
-    }
-
-    return scaffoldBody;
+    return Focus(
+      autofocus: true,
+      onKeyEvent: _handleGlobalKey,
+      child: scaffoldBody,
+    );
   }
 
   /// tvOS 全局按键处理（Select 选中、Menu 返回/刷新）
@@ -418,13 +379,7 @@ body: _buildBody(context, themeService),
   Widget _buildHeader(BuildContext context, ThemeService themeService) {
     final isTablet = DeviceUtils.isTablet(context);
 
-    // macOS 下需要额外的顶部 padding 来避免与透明标题栏重叠
-    // Windows 下不需要额外 padding，因为自定义标题栏已经占据了空间
-    final topPadding = DeviceUtils.isMacOS()
-        ? MediaQuery.of(context).padding.top + 32
-        : PlatformDetector.isWindows
-            ? 8.0
-            : MediaQuery.of(context).padding.top + 8;
+    final topPadding = MediaQuery.of(context).padding.top + 8;
 
     return Container(
       padding: EdgeInsets.only(
@@ -457,65 +412,42 @@ body: _buildBody(context, themeService),
           Positioned(
             left: 0,
             top: 4,
-            child: MouseRegion(
-              cursor: DeviceUtils.isPC()
-                  ? SystemMouseCursors.click
-                  : MouseCursor.defer,
-              onEnter: DeviceUtils.isPC()
-                  ? (_) {
-                      setState(() {
-                        _isSearchButtonHovered = true;
-                      });
-                    }
-                  : null,
-              onExit: DeviceUtils.isPC()
-                  ? (_) {
-                      setState(() {
-                        _isSearchButtonHovered = false;
-                      });
-                    }
-                  : null,
-              child: GestureDetector(
-                onTap: () {
-                  // 防止重复点击
-                  if (_isSearchButtonPressed) return;
+            child: GestureDetector(
+              onTap: () {
+                // 防止重复点击
+                if (_isSearchButtonPressed) return;
 
-                  setState(() {
-                    _isSearchButtonPressed = true;
-                  });
+                setState(() {
+                  _isSearchButtonPressed = true;
+                });
 
-                  widget.onSearchTap?.call();
+                widget.onSearchTap?.call();
 
-                  // 延迟重置按钮状态，防止快速重复点击
-                  Future.delayed(const Duration(milliseconds: 300), () {
-                    if (mounted) {
-                      setState(() {
-                        _isSearchButtonPressed = false;
-                      });
-                    }
-                  });
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: DeviceUtils.isPC() && _isSearchButtonHovered
-                        ? (themeService.isDarkMode
-                            ? const Color(0xFF333333)
-                            : const Color(0xFFe0e0e0))
-                        : Colors.transparent,
-                  ),
-                  child: Center(
-                    child: Icon(
-                      LucideIcons.search,
-                      color: themeService.isDarkMode
-                          ? const Color(0xFFffffff)
-                          : const Color(0xFF2c3e50),
-                      size: 24,
-                      weight: 1.0,
-                    ),
+                // 延迟重置按钮状态，防止快速重复点击
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  if (mounted) {
+                    setState(() {
+                      _isSearchButtonPressed = false;
+                    });
+                  }
+                });
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.transparent,
+                ),
+                child: Center(
+                  child: Icon(
+                    LucideIcons.search,
+                    color: themeService.isDarkMode
+                        ? const Color(0xFFffffff)
+                        : const Color(0xFF2c3e50),
+                    size: 24,
+                    weight: 1.0,
                   ),
                 ),
               ),
@@ -560,10 +492,10 @@ body: _buildBody(context, themeService),
               themeService.isDarkMode ? const Color(0xFF1e1e1e) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           // tvOS 聚焦时显示白色边框高亮
-          border: PlatformDetector.isTVOS && _isSearchFieldFocused
+          border: _isSearchFieldFocused
               ? Border.all(color: Colors.white, width: 3)
               : null,
-          boxShadow: PlatformDetector.isTVOS && _isSearchFieldFocused
+          boxShadow: _isSearchFieldFocused
               ? [
                   BoxShadow(
                     color: Colors.white.withValues(alpha: 0.3),
@@ -612,61 +544,31 @@ body: _buildBody(context, themeService),
                     // 搜索按钮 - 固定在右侧
                     Positioned(
                       right: isTablet ? 8 : 12,
-                      child: MouseRegion(
-                        cursor:
-                            (widget.searchQuery?.trim().isNotEmpty ?? false) &&
-                                    DeviceUtils.isPC()
-                                ? SystemMouseCursors.click
-                                : MouseCursor.defer,
-                        onEnter: DeviceUtils.isPC() &&
-                                (widget.searchQuery?.trim().isNotEmpty ?? false)
-                            ? (_) {
-                                setState(() {
-                                  _isSearchSubmitButtonHovered = true;
-                                });
-                              }
-                            : null,
-                        onExit: DeviceUtils.isPC() &&
-                                (widget.searchQuery?.trim().isNotEmpty ?? false)
-                            ? (_) {
-                                setState(() {
-                                  _isSearchSubmitButtonHovered = false;
-                                });
-                              }
-                            : null,
-                        child: GestureDetector(
-                          onTap:
-                              (widget.searchQuery?.trim().isNotEmpty ?? false)
-                                  ? () {
-                                      _removeOverlay();
-                                      widget.onSearchSubmitted
-                                          ?.call(widget.searchQuery!);
-                                    }
-                                  : null,
-                          behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            padding: EdgeInsets.all(isTablet ? 6 : 8),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: DeviceUtils.isPC() &&
-                                      _isSearchSubmitButtonHovered &&
-                                      (widget.searchQuery?.trim().isNotEmpty ??
-                                          false)
-                                  ? (themeService.isDarkMode
-                                      ? const Color(0xFF333333)
-                                      : const Color(0xFFe0e0e0))
-                                  : Colors.transparent,
-                            ),
-                            child: Icon(
-                              LucideIcons.search,
-                              color: (widget.searchQuery?.trim().isNotEmpty ??
-                                      false)
-                                  ? const Color(0xFF27ae60)
-                                  : themeService.isDarkMode
-                                      ? const Color(0xFFb0b0b0)
-                                      : const Color(0xFF7f8c8d),
-                              size: isTablet ? 18 : 16,
-                            ),
+                      child: GestureDetector(
+                        onTap:
+                            (widget.searchQuery?.trim().isNotEmpty ?? false)
+                                ? () {
+                                    _removeOverlay();
+                                    widget.onSearchSubmitted
+                                        ?.call(widget.searchQuery!);
+                                  }
+                                : null,
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          padding: EdgeInsets.all(isTablet ? 6 : 8),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.transparent,
+                          ),
+                          child: Icon(
+                            LucideIcons.search,
+                            color: (widget.searchQuery?.trim().isNotEmpty ??
+                                    false)
+                                ? const Color(0xFF27ae60)
+                                : themeService.isDarkMode
+                                    ? const Color(0xFFb0b0b0)
+                                    : const Color(0xFF7f8c8d),
+                            size: isTablet ? 18 : 16,
                           ),
                         ),
                       ),
@@ -679,48 +581,24 @@ body: _buildBody(context, themeService),
                         maintainSize: true,
                         maintainAnimation: true,
                         maintainState: true,
-                        child: MouseRegion(
-                          cursor: DeviceUtils.isPC()
-                              ? SystemMouseCursors.click
-                              : MouseCursor.defer,
-                          onEnter: DeviceUtils.isPC()
-                              ? (_) {
-                                  setState(() {
-                                    _isClearButtonHovered = true;
-                                  });
-                                }
-                              : null,
-                          onExit: DeviceUtils.isPC()
-                              ? (_) {
-                                  setState(() {
-                                    _isClearButtonHovered = false;
-                                  });
-                                }
-                              : null,
-                          child: GestureDetector(
-                            onTap: () {
-                              _removeOverlay();
-                              widget.onClearSearch?.call();
-                            },
-                            behavior: HitTestBehavior.opaque,
-                            child: Container(
-                              padding: EdgeInsets.all(isTablet ? 6 : 8),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color:
-                                    DeviceUtils.isPC() && _isClearButtonHovered
-                                        ? (themeService.isDarkMode
-                                            ? const Color(0xFF333333)
-                                            : const Color(0xFFe0e0e0))
-                                        : Colors.transparent,
-                              ),
-                              child: Icon(
-                                LucideIcons.x,
-                                color: themeService.isDarkMode
-                                    ? const Color(0xFFb0b0b0)
-                                    : const Color(0xFF7f8c8d),
-                                size: isTablet ? 18 : 16,
-                              ),
+                        child: GestureDetector(
+                          onTap: () {
+                            _removeOverlay();
+                            widget.onClearSearch?.call();
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            padding: EdgeInsets.all(isTablet ? 6 : 8),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.transparent,
+                            ),
+                            child: Icon(
+                              LucideIcons.x,
+                              color: themeService.isDarkMode
+                                  ? const Color(0xFFb0b0b0)
+                                  : const Color(0xFF7f8c8d),
+                              size: isTablet ? 18 : 16,
                             ),
                           ),
                         ),
@@ -769,49 +647,26 @@ body: _buildBody(context, themeService),
             // 左侧返回按钮
             Positioned(
               left: 0,
-              child: MouseRegion(
-                cursor: DeviceUtils.isPC()
-                    ? SystemMouseCursors.click
-                    : MouseCursor.defer,
-                onEnter: DeviceUtils.isPC()
-                    ? (_) {
-                        setState(() {
-                          _isBackButtonHovered = true;
-                        });
-                      }
-                    : null,
-                onExit: DeviceUtils.isPC()
-                    ? (_) {
-                        setState(() {
-                          _isBackButtonHovered = false;
-                        });
-                      }
-                    : null,
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: DeviceUtils.isPC() && _isBackButtonHovered
-                          ? (themeService.isDarkMode
-                              ? const Color(0xFF333333)
-                              : const Color(0xFFe0e0e0))
-                          : Colors.transparent,
-                    ),
-                    child: Center(
-                      child: Icon(
-                        LucideIcons.arrowLeft,
-                        color: themeService.isDarkMode
-                            ? const Color(0xFFffffff)
-                            : const Color(0xFF2c3e50),
-                        size: 24,
-                        weight: 1.0,
-                      ),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.transparent,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      LucideIcons.arrowLeft,
+                      color: themeService.isDarkMode
+                          ? const Color(0xFFffffff)
+                          : const Color(0xFF2c3e50),
+                      size: 24,
+                      weight: 1.0,
                     ),
                   ),
                 ),
@@ -853,24 +708,7 @@ body: _buildBody(context, themeService),
       mainAxisSize: MainAxisSize.min,
       children: [
         // 深浅模式切换按钮
-        MouseRegion(
-          cursor:
-              DeviceUtils.isPC() ? SystemMouseCursors.click : MouseCursor.defer,
-          onEnter: DeviceUtils.isPC()
-              ? (_) {
-                  setState(() {
-                    _isThemeButtonHovered = true;
-                  });
-                }
-              : null,
-          onExit: DeviceUtils.isPC()
-              ? (_) {
-                  setState(() {
-                    _isThemeButtonHovered = false;
-                  });
-                }
-              : null,
-          child: GestureDetector(
+        GestureDetector(
             onTap: () {
               themeService.toggleTheme(context);
             },
@@ -880,11 +718,7 @@ body: _buildBody(context, themeService),
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: DeviceUtils.isPC() && _isThemeButtonHovered
-                    ? (themeService.isDarkMode
-                        ? const Color(0xFF333333)
-                        : const Color(0xFFe0e0e0))
-                    : Colors.transparent,
+                color: Colors.transparent,
               ),
               child: Center(
                 child: AnimatedSwitcher(
@@ -911,27 +745,9 @@ body: _buildBody(context, themeService),
               ),
             ),
           ),
-        ),
         const SizedBox(width: 12),
         // 用户按钮
-        MouseRegion(
-          cursor:
-              DeviceUtils.isPC() ? SystemMouseCursors.click : MouseCursor.defer,
-          onEnter: DeviceUtils.isPC()
-              ? (_) {
-                  setState(() {
-                    _isUserButtonHovered = true;
-                  });
-                }
-              : null,
-          onExit: DeviceUtils.isPC()
-              ? (_) {
-                  setState(() {
-                    _isUserButtonHovered = false;
-                  });
-                }
-              : null,
-          child: GestureDetector(
+        GestureDetector(
             onTap: () {
               setState(() {
                 _showUserMenu = true;
@@ -943,11 +759,7 @@ body: _buildBody(context, themeService),
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: DeviceUtils.isPC() && _isUserButtonHovered
-                    ? (themeService.isDarkMode
-                        ? const Color(0xFF333333)
-                        : const Color(0xFFe0e0e0))
-                    : Colors.transparent,
+                color: Colors.transparent,
               ),
               child: Center(
                 child: Icon(
@@ -961,7 +773,6 @@ body: _buildBody(context, themeService),
               ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -977,7 +788,6 @@ body: _buildBody(context, themeService),
     ];
 
     final isTablet = DeviceUtils.isTablet(context);
-    final isTVOS = PlatformDetector.isTVOS;
 
     final navBar = Container(
       decoration: BoxDecoration(
@@ -1010,24 +820,20 @@ body: _buildBody(context, themeService),
             Map<String, dynamic> item = entry.value;
             bool isSelected =
                 !widget.isSearchMode && widget.currentBottomNavIndex == index;
-            bool isHovered = DeviceUtils.isPC() && _hoveredNavIndex == index;
 
             final navButton = _buildNavButton(
               index: index,
               item: item,
               isSelected: isSelected,
-              isHovered: isHovered,
               isTablet: isTablet,
               themeService: themeService,
             );
 
-            final wrappedNavButton = isTVOS
-                ? TVFocusableWidget(
-                    key: ValueKey('nav_tab_$index'),
-                    onTap: () => widget.onBottomNavChanged(index),
-                    child: navButton,
-                  )
-                : navButton;
+            final wrappedNavButton = TVFocusableWidget(
+              key: ValueKey('nav_tab_$index'),
+              onTap: () => widget.onBottomNavChanged(index),
+              child: navButton,
+            );
 
             final List<Widget> children = [wrappedNavButton];
             if (isTablet && index < navItems.length - 1) {
@@ -1042,14 +848,10 @@ body: _buildBody(context, themeService),
     );
 
     // tvOS 平台包裹 FocusTraversalGroup 确保导航顺序
-    if (isTVOS) {
-      return FocusTraversalGroup(
-        policy: TVGridFocusTraversal(),
-        child: navBar,
-      );
-    }
-
-    return navBar;
+    return FocusTraversalGroup(
+      policy: TVGridFocusTraversal(),
+      child: navBar,
+    );
   }
 
   /// 构建单个导航按钮内容
@@ -1057,27 +859,10 @@ body: _buildBody(context, themeService),
     required int index,
     required Map<String, dynamic> item,
     required bool isSelected,
-    required bool isHovered,
     required bool isTablet,
     required ThemeService themeService,
   }) {
-    return MouseRegion(
-      cursor: DeviceUtils.isPC() ? SystemMouseCursors.click : MouseCursor.defer,
-      onEnter: DeviceUtils.isPC()
-          ? (_) {
-              setState(() {
-                _hoveredNavIndex = index;
-              });
-            }
-          : null,
-      onExit: DeviceUtils.isPC()
-          ? (_) {
-              setState(() {
-                _hoveredNavIndex = null;
-              });
-            }
-          : null,
-      child: GestureDetector(
+    return GestureDetector(
         onTap: () {
           widget.onBottomNavChanged(index);
         },
@@ -1094,11 +879,9 @@ body: _buildBody(context, themeService),
                 item['icon'],
                 color: isSelected
                     ? const Color(0xFF27ae60)
-                    : isHovered
-                        ? const Color(0xFF52c77a)
-                        : themeService.isDarkMode
-                            ? const Color(0xFFb0b0b0)
-                            : const Color(0xFF7f8c8d),
+                    : themeService.isDarkMode
+                        ? const Color(0xFFb0b0b0)
+                        : const Color(0xFF7f8c8d),
                 size: 24,
               ),
               const SizedBox(height: 4),
@@ -1109,17 +892,14 @@ body: _buildBody(context, themeService),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   color: isSelected
                       ? const Color(0xFF27ae60)
-                      : isHovered
-                          ? const Color(0xFF52c77a)
-                          : themeService.isDarkMode
-                              ? const Color(0xFFb0b0b0)
-                              : const Color(0xFF7f8c8d),
+                      : themeService.isDarkMode
+                          ? const Color(0xFFb0b0b0)
+                          : const Color(0xFF7f8c8d),
                 ),
               ),
             ],
           ),
         ),
-      ),
     );
   }
 }

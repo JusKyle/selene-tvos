@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import '../core/platform_detector.dart';
 import '../models/video_info.dart';
 import '../models/douban_movie.dart';
 import '../models/bangumi.dart';
@@ -15,27 +13,15 @@ import 'fullscreen_image_viewer.dart';
 import '../models/search_result.dart';
 import '../utils/font_utils.dart';
 
-/// 判断是否为iOS平台
-bool get _isIOS {
-  if (kIsWeb) return false;
-  try {
-    return PlatformDetector.isIOS;
-  } catch (e) {
-    return false;
-  }
-}
-
 /// 自定义滚动物理，在展开状态下的顶部向下拖拽时触发收起
 class CollapsibleScrollPhysics extends ScrollPhysics {
   final bool isAtMaxHeight;
   final VoidCallback? onCollapseTriggered;
-  final bool isIOS;
 
   const CollapsibleScrollPhysics({
     super.parent,
     this.isAtMaxHeight = false,
     this.onCollapseTriggered,
-    this.isIOS = false,
   });
 
   @override
@@ -44,16 +30,14 @@ class CollapsibleScrollPhysics extends ScrollPhysics {
       parent: buildParent(ancestor),
       isAtMaxHeight: isAtMaxHeight,
       onCollapseTriggered: onCollapseTriggered,
-      isIOS: isIOS,
     );
   }
 
   @override
   double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
     // 如果已展开到最大高度且在顶部，向下拖拽时触发收起回调
-    // iOS 需要更宽松的条件，因为 bouncing 效果会产生负值
     if (isAtMaxHeight &&
-        ((isIOS && position.pixels <= 1.0) || (!isIOS && position.pixels <= 0)) &&
+        position.pixels <= 0 &&
         offset > 0) {
       // 触发收起回调
       if (onCollapseTriggered != null) {
@@ -67,8 +51,7 @@ class CollapsibleScrollPhysics extends ScrollPhysics {
 
   @override
   ScrollPhysics buildParent(ScrollPhysics? ancestor) {
-    // 根据平台选择合适的父物理效果
-    final parentPhysics = isIOS ? const BouncingScrollPhysics() : const ClampingScrollPhysics();
+    const parentPhysics = ClampingScrollPhysics();
     return parent?.applyTo(ancestor ?? parentPhysics) ?? parentPhysics;
   }
 }
@@ -168,7 +151,6 @@ class _VideoMenuBottomSheetState extends State<VideoMenuBottomSheet>
   bool _showScrollIndicator = false;
   bool _lockInnerScroll = false;
   bool _isDraggingDown = false; // 跟踪当前是否在向下拖拽
-  bool _isInCollapsePhase = false; // 跟踪是否处于收起阶段（从最大高度到初始高度）
   late AnimationController _floatAnimationController;
   late AnimationController _transitionAnimationController;
   Animation<double>? _transitionAnimation;
@@ -181,10 +163,7 @@ class _VideoMenuBottomSheetState extends State<VideoMenuBottomSheet>
   bool _hasInitialHeightCaptured = false;
   // 下拉关闭相关阈值
   final double _dismissDragThreshold = 24.0; // 超过初始高度24px继续下拉则关闭
-  double get _dismissVelocityThreshold {
-    // iOS 需要更敏感的阈值，因为 bouncing 效果会消耗一些速度
-    return _isIOS ? 400.0 : 800.0;
-  } // 快速下滑关闭的速度阈值
+  final double _dismissVelocityThreshold = 800.0; // 快速下滑关闭的速度阈值
 
   @override
   void initState() {
@@ -301,12 +280,6 @@ class _VideoMenuBottomSheetState extends State<VideoMenuBottomSheet>
     if (!mounted) return;
 
     if (_initialSheetHeight != null) {
-      // iOS 上进入二段式收起阶段
-      if (_isIOS) {
-        setState(() {
-          _isInCollapsePhase = true;
-        });
-      }
       _animateToHeight(_initialSheetHeight!);
       setState(() {
         _showScrollIndicator = true;
@@ -501,7 +474,6 @@ class _VideoMenuBottomSheetState extends State<VideoMenuBottomSheet>
                   final shouldLockInnerScroll = isAtMaxHeight && isScrollAtTop && isDraggingDown;
                   if (shouldLockInnerScroll && !_lockInnerScroll) {
                     _lockInnerScroll = true;
-                    _isInCollapsePhase = true; // 开始收起阶段
                   }
 
                   final delta = -details.delta.dy; // 负值表示向上拖拽
@@ -510,30 +482,8 @@ class _VideoMenuBottomSheetState extends State<VideoMenuBottomSheet>
                   // 使用内容基础的最大高度，如果没有则使用屏幕基础的最大高度
                   final effectiveMaxHeight = _contentBasedMaxHeight ?? _maxSheetHeight;
 
-                  // iOS 二段式滑动逻辑
-                  if (_isIOS && _isInCollapsePhase) {
-                    // 第一阶段：从最大高度收起到初始高度
-                    if (isDraggingDown && _currentSheetHeight! > _initialSheetHeight!) {
-                      // 使用高效的拖拽高度更新
-                      _updateDragHeight(newHeight, effectiveMaxHeight, isDraggingDown);
-                      return;
-                    }
-
-                    // 如果已经到达初始高度，继续向下拖拽则进入第二阶段（关闭弹窗）
-                    if (isDraggingDown && _currentSheetHeight! <= _initialSheetHeight! + 1) {
-                      // 第二阶段：从初始高度继续向下拖拽，超过阈值则关闭
-                      if (newHeight < _initialSheetHeight! - _dismissDragThreshold) {
-                        widget.onClose();
-                        return;
-                      }
-                      // 否则保持在初始高度
-                      _updateDragHeight(_initialSheetHeight!, effectiveMaxHeight, isDraggingDown);
-                      return;
-                    }
-                  } else {
-                    // 使用高效的拖拽高度更新
-                    _updateDragHeight(newHeight, effectiveMaxHeight, isDraggingDown);
-                  }
+                  // 使用高效的拖拽高度更新
+                  _updateDragHeight(newHeight, effectiveMaxHeight, isDraggingDown);
                 }
               },
               onPanEnd: (details) {
@@ -542,56 +492,36 @@ class _VideoMenuBottomSheetState extends State<VideoMenuBottomSheet>
                   final velocity = details.velocity.pixelsPerSecond.dy; // 向下为正
                   final effectiveMaxHeight = _contentBasedMaxHeight ?? _maxSheetHeight;
                   
-                  // iOS 二段式滑动结束处理
-                  if (_isIOS && _isInCollapsePhase) {
-                    // 如果在初始高度附近并快速向下，关闭弹窗
-                    if (_currentSheetHeight! <= _initialSheetHeight! + 1 && velocity > _dismissVelocityThreshold) {
-                      widget.onClose();
-                      return;
-                    }
-                    
-                    // 如果还在收起阶段（高度大于初始高度），吸附到初始高度
-                    if (_currentSheetHeight! > _initialSheetHeight! + 1) {
-                      _animateToHeight(_initialSheetHeight!);
-                      setState(() {
-                        _showScrollIndicator = true;
-                      });
-                    }
-                  } else {
-                    // 非iOS或非收起阶段的正常逻辑
-                    // 如果在初始高度附近并快速向下，关闭弹窗
-                    if (_currentSheetHeight! <= _initialSheetHeight! + 1 && velocity > _dismissVelocityThreshold) {
-                      widget.onClose();
-                      return;
-                    }
-                    
-                    // iOS 需要更敏感的阈值，因为 bouncing 效果会消耗一些速度
-                    final velocityThreshold = _isIOS ? 400.0 : 800.0;
-                    final negativeVelocityThreshold = _isIOS ? -400.0 : -800.0;
-
-                    if (velocity > velocityThreshold) {
-                      // 向下快速拖动 - 无论什么状态都尝试收起菜单
-                      _animateToHeight(_initialSheetHeight!);
-                      setState(() {
-                        _showScrollIndicator = true;
-                      });
-                    } else if (velocity < negativeVelocityThreshold) {
-                      // 向上快速拖动，展开到最大高度
-                      _animateToHeight(effectiveMaxHeight);
-                      setState(() {
-                        _showScrollIndicator = false;
-                      });
-                    }
+                  // 如果在初始高度附近并快速向下，关闭弹窗
+                  if (_currentSheetHeight! <= _initialSheetHeight! + 1 && velocity > _dismissVelocityThreshold) {
+                    widget.onClose();
+                    return;
                   }
-                  
+
+                  const velocityThreshold = 800.0;
+                  const negativeVelocityThreshold = -800.0;
+
+                  if (velocity > velocityThreshold) {
+                    // 向下快速拖动 - 无论什么状态都尝试收起菜单
+                    _animateToHeight(_initialSheetHeight!);
+                    setState(() {
+                      _showScrollIndicator = true;
+                    });
+                  } else if (velocity < negativeVelocityThreshold) {
+                    // 向上快速拖动，展开到最大高度
+                    _animateToHeight(effectiveMaxHeight);
+                    setState(() {
+                      _showScrollIndicator = false;
+                    });
+                  }
+
                   // 拖拽结束后，解除内部滚动锁并重置所有状态
                   setState(() {
                     if (_lockInnerScroll) {
                       _lockInnerScroll = false;
                     }
-                    // 重置拖拽方向状态和收起阶段状态
+                    // 重置拖拽方向状态
                     _isDraggingDown = false;
-                    _isInCollapsePhase = false;
                   });
                 }
               },
@@ -630,12 +560,11 @@ class _VideoMenuBottomSheetState extends State<VideoMenuBottomSheet>
                               onNotification: (notification) {
                                 // 监听过度滚动通知，作为备用方案
                                 if (notification is OverscrollNotification) {
-                                  final isAtTop = notification.metrics.pixels <= (_isIOS ? 1.0 : 0.0);
+                                  final isAtTop = notification.metrics.pixels <= 0.0;
                                   final isOverscrollingDown = notification.overscroll > 0;
                                   final velocity = notification.velocity;
 
-                                  // iOS 需要更宽松的条件，因为 bouncing 效果
-                                  final velocityThreshold = _isIOS ? 400.0 : 800.0;
+                                  const velocityThreshold = 800.0;
 
                                   if (isAtTop && isOverscrollingDown && velocity > velocityThreshold) {
                                     final isAtMaxHeight = _currentSheetHeight != null &&
@@ -672,7 +601,6 @@ class _VideoMenuBottomSheetState extends State<VideoMenuBottomSheet>
                                   return CollapsibleScrollPhysics(
                                     isAtMaxHeight: isAtMaxHeight,
                                     onCollapseTriggered: _handleCollapseFromScroll,
-                                    isIOS: _isIOS,
                                   );
                                 })(),
                               child: Container(

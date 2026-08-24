@@ -2,17 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../services/user_data_service.dart';
 import '../screens/login_screen.dart';
 import '../services/douban_cache_service.dart';
 import '../services/page_cache_service.dart';
 import '../services/live_service.dart';
 import '../services/local_search_cache_service.dart';
-import '../services/version_service.dart';
-import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
-import 'update_dialog.dart';
 
 class UserMenu extends StatefulWidget {
   final bool isDarkMode;
@@ -166,56 +162,6 @@ class _UserMenuState extends State<UserMenu> {
         );
         // 即便失败也关闭菜单，避免停留
         widget.onClose?.call();
-      }
-    }
-  }
-
-  Future<void> _handleCheckUpdate() async {
-    try {
-      // 显示加载提示
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '正在检查更新...',
-              style: FontUtils.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.black,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-
-      final versionInfo = await VersionService.checkForUpdate();
-
-      if (!mounted) return;
-
-      if (versionInfo != null) {
-        // 有新版本，显示更新对话框
-        await UpdateDialog.show(context, versionInfo);
-      } else {
-        // 已是最新版本
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '当前已是最新版本',
-              style: FontUtils.poppins(color: Colors.white),
-            ),
-            backgroundColor: const Color(0xFF27AE60),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '检查更新失败: ${e.toString()}',
-              style: FontUtils.poppins(color: Colors.white),
-            ),
-            backgroundColor: const Color(0xFFef4444),
-          ),
-        );
       }
     }
   }
@@ -877,56 +823,6 @@ class _UserMenuState extends State<UserMenu> {
                         ),
                       ),
                     ),
-                    // 检查更新（tvOS 通过 App Store 更新，无需此入口）
-                    if (!DeviceUtils.isTVOS()) ...[
-                      // 分割线
-                      Container(
-                        height: 1,
-                        color: widget.isDarkMode
-                            ? const Color(0xFF374151)
-                            : const Color(0xFFe5e7eb),
-                      ),
-                      // 检查更新按钮
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: _handleCheckUpdate,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  LucideIcons.download,
-                                  size: 20,
-                                  color: Color(0xFF3b82f6),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  '检查更新',
-                                  style: FontUtils.poppins(
-                                    fontSize: 16,
-                                    color: widget.isDarkMode
-                                        ? const Color(0xFFffffff)
-                                        : const Color(0xFF1f2937),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // 分割线
-                      Container(
-                        height: 1,
-                        color: widget.isDarkMode
-                            ? const Color(0xFF374151)
-                            : const Color(0xFFe5e7eb),
-                      ),
-                    ],
                     // 登出按钮
                     Material(
                       color: Colors.transparent,
@@ -966,36 +862,22 @@ class _UserMenuState extends State<UserMenu> {
                           : const Color(0xFFe5e7eb),
                     ),
                     // 版本号（tvOS 无浏览器，不提供跳转）
-                    MouseRegion(
-                      cursor: DeviceUtils.isPC()
-                          ? SystemMouseCursors.click
-                          : MouseCursor.defer,
-                      child: GestureDetector(
-                        onTap: DeviceUtils.isTVOS()
-                            ? null
-                            : () async {
-                                final url = Uri.parse(
-                                    'https://github.com/MoonTechLab/Selene');
-                                if (await canLaunchUrl(url)) {
-                                  await launchUrl(url,
-                                      mode: LaunchMode.externalApplication);
-                                }
-                              },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          child: Center(
-                            child: Text(
-                              _version.isEmpty ? 'v1.4.3' : 'v$_version',
-                              style: FontUtils.poppins(
-                                fontSize: 14,
-                                color: widget.isDarkMode
-                                    ? const Color(0xFF9ca3af)
-                                    : const Color(0xFF6b7280),
-                                fontWeight: FontWeight.w500,
-                              ),
+                    GestureDetector(
+                      onTap: null,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        child: Center(
+                          child: Text(
+                            _version.isEmpty ? 'v1.4.3' : 'v$_version',
+                            style: FontUtils.poppins(
+                              fontSize: 14,
+                              color: widget.isDarkMode
+                                  ? const Color(0xFF9ca3af)
+                                  : const Color(0xFF6b7280),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),

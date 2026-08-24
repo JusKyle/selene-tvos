@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../core/platform_detector.dart';
 import '../widgets/continue_watching_section.dart';
 import '../widgets/hot_movies_section.dart';
 import '../widgets/hot_tv_section.dart';
@@ -11,7 +10,6 @@ import '../widgets/favorites_grid.dart';
 import '../widgets/history_grid.dart';
 import 'search_screen.dart';
 import '../widgets/video_menu_bottom_sheet.dart';
-import '../widgets/custom_refresh_indicator.dart';
 import '../models/play_record.dart';
 import '../models/video_info.dart';
 import '../utils/font_utils.dart';
@@ -156,15 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ///
   /// tvOS 上没有触摸拖拽，隐藏下拉刷新指示器，改为通过全局 Menu 键触发刷新
   Widget _buildScrollableTabContent(Widget child) {
-    if (PlatformDetector.isTVOS) {
-      return child;
-    }
-    return StyledRefreshIndicator(
-      onRefresh: _refreshHomeData,
-      refreshText: '刷新中...',
-      primaryColor: const Color(0xFF27AE60),
-      child: child,
-    );
+    return child;
   }
 
   /// 构建首页内容（带 PageView 支持滑动切换）
@@ -494,56 +484,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 处理点击搜索按钮
   void _onSearchTap() {
-    if (PlatformDetector.isIOS) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SearchScreen(),
-        ),
-      ).then((_) {
-        // 从搜索页面返回时刷新数据
-        if (mounted) {
-          _refreshOnResume();
-        }
-      });
-    } else if (PlatformDetector.isTVOS) {
-      // tvOS 使用淡入过渡动画
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const SearchScreen(),
-          transitionDuration: const Duration(milliseconds: 250),
-          reverseTransitionDuration: const Duration(milliseconds: 250),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-        ),
-      ).then((_) {
-        // 从搜索页面返回时刷新数据
-        if (mounted) {
-          _refreshOnResume();
-        }
-      });
-    } else {
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const SearchScreen(),
-          transitionDuration: Duration.zero, // 无打开动画
-          reverseTransitionDuration: Duration.zero, // 无关闭动画
-        ),
-      ).then((_) {
-        // 从搜索页面返回时刷新数据
-        if (mounted) {
-          _refreshOnResume();
-        }
-      });
-    }
+    // tvOS 使用淡入过渡动画
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const SearchScreen(),
+        transitionDuration: const Duration(milliseconds: 250),
+        reverseTransitionDuration: const Duration(milliseconds: 250),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+      ),
+    ).then((_) {
+      // 从搜索页面返回时刷新数据
+      if (mounted) {
+        _refreshOnResume();
+      }
+    });
   }
 
   /// 处理点击 Selene 标题跳转到首页
