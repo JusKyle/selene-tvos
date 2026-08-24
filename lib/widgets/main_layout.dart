@@ -6,7 +6,6 @@ import 'package:selene/services/search_service.dart';
 import 'package:selene/services/user_data_service.dart';
 import '../services/theme_service.dart';
 import '../services/api_service.dart';
-import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
 import 'user_menu.dart';
 import 'dart:async';
@@ -181,14 +180,11 @@ class _MainLayoutState extends State<MainLayout> {
     }
 
     final themeService = Provider.of<ThemeService>(context, listen: false);
-    final isTablet = DeviceUtils.isTablet(context);
 
     // 计算建议框宽度
-    // 平板模式：屏幕宽度的 50%
-    // 移动端：屏幕宽度 - 左右padding(32) - 右侧按钮宽度(32*2) - 按钮间距(12) - 按钮与搜索框间距(16)
+    // tvOS：屏幕宽度的 50%
     final screenWidth = MediaQuery.of(context).size.width;
-    final suggestionWidth =
-        isTablet ? screenWidth * 0.5 : screenWidth - 32 - 16 - 32 - 12 - 32;
+    final suggestionWidth = screenWidth * 0.5;
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
@@ -377,8 +373,6 @@ body: _buildBody(context, themeService),
   }
 
   Widget _buildHeader(BuildContext context, ThemeService themeService) {
-    final isTablet = DeviceUtils.isTablet(context);
-
     final topPadding = MediaQuery.of(context).padding.top + 8;
 
     return Container(
@@ -398,7 +392,7 @@ body: _buildBody(context, themeService),
                 : Colors.white.withValues(alpha: 0.8),
       ),
       child: widget.isSearchMode
-          ? _buildSearchHeader(context, themeService, isTablet)
+          ? _buildSearchHeader(context, themeService)
           : _buildNormalHeader(context, themeService),
     );
   }
@@ -482,8 +476,7 @@ body: _buildBody(context, themeService),
     );
   }
 
-  Widget _buildSearchHeader(
-      BuildContext context, ThemeService themeService, bool isTablet) {
+  Widget _buildSearchHeader(BuildContext context, ThemeService themeService) {
     final searchBoxWidget = CompositedTransformTarget(
       link: _layerLink,
       child: Container(
@@ -537,13 +530,13 @@ body: _buildBody(context, themeService),
                 fontSize: 14,
               ),
               suffixIcon: SizedBox(
-                width: isTablet ? 80 : 80, // 固定宽度确保按钮位置一致
+                width: 80, // 固定宽度确保按钮位置一致
                 child: Stack(
                   alignment: Alignment.centerRight,
                   children: [
                     // 搜索按钮 - 固定在右侧
                     Positioned(
-                      right: isTablet ? 8 : 12,
+                      right: 8,
                       child: GestureDetector(
                         onTap:
                             (widget.searchQuery?.trim().isNotEmpty ?? false)
@@ -555,7 +548,7 @@ body: _buildBody(context, themeService),
                                 : null,
                         behavior: HitTestBehavior.opaque,
                         child: Container(
-                          padding: EdgeInsets.all(isTablet ? 6 : 8),
+                          padding: EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Colors.transparent,
@@ -568,14 +561,14 @@ body: _buildBody(context, themeService),
                                 : themeService.isDarkMode
                                     ? const Color(0xFFb0b0b0)
                                     : const Color(0xFF7f8c8d),
-                            size: isTablet ? 18 : 16,
+                            size: 18,
                           ),
                         ),
                       ),
                     ),
                     // 清除按钮 - 在搜索按钮左侧（仅在有内容时显示）
                     Positioned(
-                      right: isTablet ? 42 : 44,
+                      right: 42,
                       child: Visibility(
                         visible: widget.searchQuery?.isNotEmpty ?? false,
                         maintainSize: true,
@@ -588,7 +581,7 @@ body: _buildBody(context, themeService),
                           },
                           behavior: HitTestBehavior.opaque,
                           child: Container(
-                            padding: EdgeInsets.all(isTablet ? 6 : 8),
+                            padding: EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.transparent,
@@ -598,7 +591,7 @@ body: _buildBody(context, themeService),
                               color: themeService.isDarkMode
                                   ? const Color(0xFFb0b0b0)
                                   : const Color(0xFF7f8c8d),
-                              size: isTablet ? 18 : 16,
+                              size: 18,
                             ),
                           ),
                         ),
@@ -637,67 +630,52 @@ body: _buildBody(context, themeService),
       ),
     );
 
-    // 平板模式下居中
-    if (isTablet) {
-      return SizedBox(
-        height: 40, // 固定高度
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // 左侧返回按钮
-            Positioned(
-              left: 0,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.transparent,
-                  ),
-                  child: Center(
-                    child: Icon(
-                      LucideIcons.arrowLeft,
-                      color: themeService.isDarkMode
-                          ? const Color(0xFFffffff)
-                          : const Color(0xFF2c3e50),
-                      size: 24,
-                      weight: 1.0,
-                    ),
+    // tvOS：搜索框整体水平居中
+    return SizedBox(
+      height: 40, // 固定高度
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // 左侧返回按钮
+          Positioned(
+            left: 0,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.transparent,
+                ),
+                child: Center(
+                  child: Icon(
+                    LucideIcons.arrowLeft,
+                    color: themeService.isDarkMode
+                        ? const Color(0xFFffffff)
+                        : const Color(0xFF2c3e50),
+                    size: 24,
+                    weight: 1.0,
                   ),
                 ),
               ),
             ),
-            // 搜索框在整个屏幕水平居中
-            Center(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.5,
-                child: searchBoxWidget,
-              ),
+          ),
+          // 搜索框在整个屏幕水平居中
+          Center(
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.5,
+              child: searchBoxWidget,
             ),
-            // 右侧按钮 - 垂直居中
-            Positioned(
-              right: 0,
-              child: _buildRightButtons(themeService),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // 非平板模式下，搜索框居左，右侧留出按钮空间
-    return SizedBox(
-      height: 40, // 固定高度
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(child: searchBoxWidget),
-          const SizedBox(width: 16),
-          _buildRightButtons(themeService),
+          ),
+          // 右侧按钮 - 垂直居中
+          Positioned(
+            right: 0,
+            child: _buildRightButtons(themeService),
+          ),
         ],
       ),
     );
@@ -787,8 +765,6 @@ body: _buildBody(context, themeService),
       {'icon': LucideIcons.radio, 'label': '直播'},
     ];
 
-    final isTablet = DeviceUtils.isTablet(context);
-
     final navBar = Container(
       decoration: BoxDecoration(
         color: themeService.isDarkMode
@@ -810,10 +786,9 @@ body: _buildBody(context, themeService),
         bottom: MediaQuery.of(context).padding.bottom + 8,
       ),
       child: Row(
-        mainAxisAlignment:
-            isTablet ? MainAxisAlignment.center : MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (isTablet) const Spacer(flex: 3),
+          const Spacer(flex: 3),
 
           ...navItems.asMap().entries.expand((entry) {
             int index = entry.key;
@@ -825,7 +800,6 @@ body: _buildBody(context, themeService),
               index: index,
               item: item,
               isSelected: isSelected,
-              isTablet: isTablet,
               themeService: themeService,
             );
 
@@ -836,13 +810,13 @@ body: _buildBody(context, themeService),
             );
 
             final List<Widget> children = [wrappedNavButton];
-            if (isTablet && index < navItems.length - 1) {
+            if (index < navItems.length - 1) {
               children.add(const SizedBox(width: 36));
             }
             return children;
           }),
 
-          if (isTablet) const Spacer(flex: 3),
+          const Spacer(flex: 3),
         ],
       ),
     );
@@ -859,7 +833,6 @@ body: _buildBody(context, themeService),
     required int index,
     required Map<String, dynamic> item,
     required bool isSelected,
-    required bool isTablet,
     required ThemeService themeService,
   }) {
     return GestureDetector(
@@ -868,8 +841,8 @@ body: _buildBody(context, themeService),
         },
         behavior: HitTestBehavior.opaque,
         child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isTablet ? 16 : 12,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
             vertical: 8,
           ),
           child: Column(

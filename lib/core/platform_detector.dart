@@ -8,8 +8,4 @@ class PlatformDetector {
   }
 
   static bool get isTVOS => _isTVOS;
-  static bool get isIOS => !_isTVOS && defaultTargetPlatform == TargetPlatform.iOS;
-  static bool get isMacOS => defaultTargetPlatform == TargetPlatform.macOS;
-  static bool get isWindows => defaultTargetPlatform == TargetPlatform.windows;
-  static bool get isPC => isWindows || isMacOS;
 }

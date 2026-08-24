@@ -16,7 +16,6 @@ import '../widgets/bangumi_grid.dart';
 import '../widgets/simple_tab_switcher.dart';
 import 'player_screen.dart';
 import '../widgets/filter_pill_hover.dart';
-import '../utils/device_utils.dart';
 import '../utils/font_utils.dart';
 import '../widgets/filter_options_selector.dart';
 
@@ -850,7 +849,6 @@ class _AnimeScreenState extends State<AnimeScreen> {
         (title == '排序' && selectedValue == 'T');
 
     return FilterPillHover(
-      isPC: DeviceUtils.isPC(),
       isDefault: isDefault,
       title: title,
       selectedOption: selectedOption,

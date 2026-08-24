@@ -52,11 +52,6 @@ class _SearchScreenState extends State<SearchScreen>
   String _selectedTitle = 'all';
   SortOrder _yearSortOrder = SortOrder.none;
 
-  // 长按删除相关状态
-  String? _deletingHistoryItem;
-  AnimationController? _deleteAnimationController;
-  Animation<double>? _deleteAnimation;
-
   late SSESearchService _searchService;
   StreamSubscription<List<SearchResult>>? _incrementalResultsSubscription;
   StreamSubscription<SearchProgress>? _progressSubscription;
@@ -119,19 +114,6 @@ class _SearchScreenState extends State<SearchScreen>
     _setupSearchListeners();
     _loadSearchHistory();
 
-    // 初始化删除动画控制器
-    _deleteAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1500), // 1.5秒变红动画
-      vsync: this,
-    );
-    _deleteAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _deleteAnimationController!,
-      curve: Curves.easeInOut,
-    ));
-
     // 进入搜索页面时自动聚焦搜索框
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
@@ -150,7 +132,6 @@ class _SearchScreenState extends State<SearchScreen>
     _errorSubscription?.cancel();
     _updateTimer?.cancel();
     _searchService.dispose();
-    _deleteAnimationController?.dispose();
     super.dispose();
   }
 
@@ -381,26 +362,6 @@ class _SearchScreenState extends State<SearchScreen>
     }
   }
 
-  /// 开始删除动画
-  void _startDeleteAnimation(String historyItem) {
-    setState(() {
-      _deletingHistoryItem = historyItem;
-    });
-    _deleteAnimationController?.forward().then((_) {
-      if (!mounted) return;
-      // 动画完成后执行删除
-      _deleteSearchHistory(historyItem);
-    });
-  }
-
-  /// 取消删除动画
-  void _cancelDeleteAnimation() {
-    _deleteAnimationController?.reset();
-    setState(() {
-      _deletingHistoryItem = null;
-    });
-  }
-
   /// 删除单个搜索历史
   Future<void> _deleteSearchHistory(String historyItem) async {
     try {
@@ -412,7 +373,6 @@ class _SearchScreenState extends State<SearchScreen>
         if (mounted) {
           setState(() {
             _searchHistory.remove(historyItem);
-            _deletingHistoryItem = null;
           });
         }
       } else {
